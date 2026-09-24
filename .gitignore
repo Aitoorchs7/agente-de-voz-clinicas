@@ -1,0 +1,31 @@
+# --- Secretos. Nunca se versionan. -------------------------------------------------------------
+.env
+.env.*
+!.env.example
+
+# Credenciales de Google (la cuenta de servicio vive en credenciales/cuenta-servicio.json)
+credenciales/
+*-service-account.json
+*.pem
+*.p12
+*.key
+
+# --- Operación, no código ------------------------------------------------------------------------
+# Registro del compilador: contadores, último prompt publicado, copia del asistente de antes.
+registro/
+*.log
+npm-debug.log*
+
+# --- Node y herramientas -------------------------------------------------------------------------
+node_modules/
+.vercel/
+coverage/
+*.tsbuildinfo
+
+# --- Claude Code: los permisos personales de cada máquina no se comparten -----------------------
+.claude/settings.local.json
+
+# --- Sistema -------------------------------------------------------------------------------------
+Thumbs.db
+desktop.ini
+.DS_Store

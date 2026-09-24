@@ -1,0 +1,42 @@
+// El texto de la pestaña LÉEME. Va dirigido a la persona de recepción, no a un técnico: explica qué
+// puede cambiar ella sola, cómo, y la única regla que rompe la hoja si no se cumple.
+// Lo que NO dice, porque no se promete: el tono, los límites y las barandillas del asistente no se
+// cambian desde aquí (PLAN.md §1).
+
+export const TEXTO_LEEME: string[] = [
+  "CÓMO FUNCIONA ESTA HOJA",
+  "",
+  "Esta hoja es lo que sabe el asistente de teléfono de la clínica. Lo que cambie aquí, el asistente lo dice unos cinco minutos después, sin llamar a nadie.",
+  "",
+  "QUÉ PUEDE CAMBIAR USTED, Y DÓNDE",
+  "• Que diga otro precio → cambie la respuesta en la pestaña FAQ.",
+  "• Que responda algo nuevo → añada una fila en FAQ, con la pregunta y la respuesta completa, tal como la diría usted.",
+  "• Que un tratamiento dure otro tiempo → cambie «duracion_min» en Tratamientos (solo el número de minutos).",
+  "• Que deje de ofrecer un tratamiento → ponga «no» en la columna «público».",
+  "• Que cambie el horario → edite Horarios.",
+  "• Que tutee a los pacientes → ponga «tú» en «trato», en Config.",
+  "• Que el asistente se llame de otra forma → cambie «nombre_bot» en Config.",
+  "",
+  "LA COLUMNA «PÚBLICO»",
+  "• «sí» → el asistente lo sabe y lo puede decir.",
+  "• «no» → el asistente no lo ve nunca. Por eso aquí puede guardar márgenes, costes de laboratorio o acuerdos con mutuas sin ningún riesgo: esa fila no sale de la hoja.",
+  "• Si la deja vacía, esa fila no se carga: el asistente no la conoce.",
+  "• Si escribe cualquier otra cosa («pendiente», «x»…), el asistente NO se actualiza hasta que se corrija, y sigue diciendo lo de antes. Use el desplegable.",
+  "",
+  "UNA REGLA IMPORTANTE: NADA DE NOTAS SUELTAS DEBAJO DE LAS TABLAS",
+  "Si escribe una nota debajo de una tabla, Google la trata como si fuera una fila más. Si necesita apuntar algo, hágalo en la columna «comentario» de Config o aquí, en esta pestaña.",
+  "",
+  "CÓMO SE ESCRIBE CADA COSA",
+  "• Horarios: una fila por tramo. Si abre de 9:00 a 14:00 y de 16:00 a 20:00, son dos filas del mismo día. Un día sin filas es un día cerrado.",
+  "• Las horas, así: 9:00 o 16:30.",
+  "• Las respuestas de FAQ se dicen tal cual: escríbalas completas. Si está a medias, el asistente no la completa por su cuenta.",
+  "• No use llaves, ni {{ }} ni {% %}: el asistente las entiende como código y no se actualiza.",
+  "• No cambie el nombre de las pestañas ni el de las columnas de la primera fila.",
+  "",
+  "LO QUE SE RELLENA SOLO (no hace falta tocarlo)",
+  "• Citas, Llamadas y Escalados las rellena el asistente.",
+  "• Mire Escalados cada mañana: ahí está lo que el asistente no supo resolver y quién espera que le llamen.",
+  "",
+  "LO QUE NO SE CAMBIA DESDE AQUÍ",
+  "Cómo habla el asistente, lo que nunca debe decir (consejo médico, inventarse horas o precios) y cuándo pasa el aviso a recepción. Eso está fijado a propósito, para que nadie lo borre sin querer.",
+];

@@ -1,0 +1,3 @@
+# Finales de línea LF en el repositorio, para que los bloques del prompt se lean igual en Windows y en
+# Vercel (Linux). El compilador ya normaliza \r\n al leer, así que esto no cambia ni una palabra del prompt.
+* text=auto eol=lf

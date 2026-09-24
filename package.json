@@ -1,0 +1,22 @@
+{
+  "name": "agente-de-voz-clinicas",
+  "private": true,
+  "type": "module",
+  "description": "Agente de voz para clínicas dentales: compilador de la ficha (Fase 2) y, más adelante, herramientas propias (Fase 3).",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "compilar": "tsx scripts/compilar.ts",
+    "vigilar": "tsx scripts/vigilar.ts",
+    "preparar-hoja": "tsx scripts/preparar-hoja.ts",
+    "test": "vitest run",
+    "comprobar-tipos": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.2",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2",
+    "vitest": "^5.0.1"
+  }
+}
