@@ -1,15 +1,16 @@
 # ESTADO — Fase 2: El compilador
 
-> **ESTADO: SOFTWARE TERMINADO Y VERIFICADO HASTA EL ASISTENTE PUBLICADO. FALTA UNA LLAMADA POR `Talk`.**
+> **ESTADO: ENTREGABLE PROBADO POR `Talk` (24-sep). Solo queda la reprueba por teléfono, al final.**
 >
-> Cambiar un precio en la hoja → el bucle lo publica solo → el asistente real lo lleva en su prompt:
-> **hecho y medido** (4 min 54 s, ver abajo). Lo que falta para dar el entregable por probado es
-> **oírlo**: una llamada web por `Talk` que tiene que hacer el humano (la API de chat de Vapi da `402`
-> sin tarjeta, así que no hay forma de oírlo sin una persona). Guion de esa llamada más abajo.
+> Cambiar un precio en la hoja → el bucle lo publica solo en 4 min 54 s → **oído por `Talk`**: Diego dijo
+> «la limpieza bucal cuesta 60 euros» (`callId` `01a0d49f-8093-7ff3-b77b-742992cb5fa1`, verificado
+> leyendo la transcripción en Vapi, no solo fiándose del humano).
 >
 > **La reprueba por teléfono** queda para cuando haya número español de Twilio. Decisión del humano
 > (24-sep): *«cuando terminemos lo haremos de golpe, pasando por todas las fases de prueba, e iremos
 > cerrando fases»*. No es un bloqueo de esta fase.
+>
+> **Código en git**, repositorio **privado**: `https://github.com/Aitoorchs7/agente-de-voz-clinicas`.
 >
 > **Si eres el agente de la Fase 3:** puedes empezar. Tu punto de partida está entero aquí.
 
@@ -27,24 +28,36 @@ Quién: agente de la Fase 2
 | Aborto con valor raro | Se escribió «pendiente» en `FAQ!D3` de la hoja real | `NO PUBLICADO`, asistente sigue en `v13`. Restaurado |
 | Aborto sin columna `público` | Se renombró la cabecera de `Tratamientos!F1` en la hoja real | `NO PUBLICADO`, asistente sigue en `v13`. Restaurado |
 | **El entregable, hasta el asistente** | Bucle `npm run vigilar` corriendo; a las **19:57:53** la limpieza pasó de 55 € a 60 € en la hoja | A las **20:02:47** el bucle publicó solo (`v14`). GET: el prompt dice *«La limpieza bucal cuesta 60 €»* y el `model` sigue entero. **4 min 54 s** |
-| **Oírlo por `Talk`** | — | **PENDIENTE: lo hace el humano** (guion abajo) |
+| **Oírlo por `Talk`** | Llamada del humano, 24-sep 20:13, `01a0d49f-8093-7ff3-b77b-742992cb5fa1`, 0,17 $ | **«La limpieza bucal cuesta 60 euros».** Sedación, coste de laboratorio y parking de bicis: **no se inventó nada**, todo a recepción |
+| Arreglo del teléfono (abajo) | Publicado como `v15` tras la llamada | Publicado y verificado por GET. **Sin probar en llamada** |
 | Oírlo por teléfono | — | Pendiente de Fase 0 (Twilio) |
 
 > ⚠ **La hoja de Dentalvis se ha quedado con la limpieza a 60 €** a propósito, para la llamada de
 > `Talk`. Después, volver a 55 € es exactamente la demo del §7 punto 3: se cambia en la hoja y en
 > cinco minutos lo dice el bot.
 
-### La llamada de `Talk` que falta (guion, dos minutos)
+### Lo que destapó la llamada de `Talk`: el teléfono que no existe
 
-Panel de Vapi → Assistants → `Diego - Clínica Dentalvis` → **Talk**. Preguntar, por este orden:
+La llamada cumplió el entregable, pero al leer la transcripción apareció un fallo que no se buscaba:
 
-1. *«¿Cuánto cuesta una limpieza?»* → tiene que decir **sesenta euros**. Esto cierra el entregable.
-2. *«¿Hacéis sedación?»* → no lo sabe (es la fila confidencial de `Tratamientos`): lo confirma recepción.
-3. *«¿Cuánto os cuesta una corona en el laboratorio?»* → no lo sabe (fila confidencial de `FAQ`).
-4. *«¿Tenéis parking para bicicletas?»* → no está en la hoja: *«eso se lo confirma recepción»*.
-5. Escuchar el saludo: ahora lleva la frase de privacidad (ver *«Lo que no quedó cerrado»*, punto 4).
+- En una llamada web **no hay número**, y aun así Diego ofreció *«¿le llamamos a este mismo número
+  desde el que me habla?»*. El paciente dijo que sí.
+- En la pestaña `Llamadas` quedó apuntado, como teléfono, **el texto literal `{{customer.number}}`**.
 
-Si el 1 dice sesenta, el entregable está probado por `Talk`; apúntalo aquí con el `callId`.
+**Causa:** cuando no hay número (llamada web, y también número oculto), **Vapi no sustituye
+`{{customer.number}}`: deja el texto tal cual**. El prompt decía *«aquí te llega el número… si lo hay:
+{{customer.number}}»*, el modelo vio algo escrito ahí y lo tomó por un número. La Fase 1 arregló que se
+**inventara** dígitos; esto es la otra cara: dar por bueno un número que no existe. Recepción se queda
+sin forma de devolver la llamada, y no se nota hasta que hay que llamar.
+
+**Arreglo (publicado, `v15`):** en el `50` el número va entre comillas —`«{{customer.number}}»`— y el
+bloque dice que **solo hay número si entre las comillas hay cifras**; si está vacío o hay un texto entre
+llaves, no lo hay, no se ofrece «este mismo número» y se pide. En el `70`, la columna del teléfono dice
+que ahí solo van cifras o nada. Hay una prueba que vigila las comillas.
+
+**Sin probar en llamada.** Para comprobarlo: una llamada por `Talk` pidiendo que te llamen de recepción;
+tiene que **pedirte el teléfono**, no ofrecerte «este mismo número». Es barato y conviene hacerlo antes
+de cualquier demo. La fila con `{{customer.number}}` sigue en `Llamadas` de Dentalvis como prueba del fallo.
 
 ---
 
@@ -222,8 +235,10 @@ duraciones** no están en `Config`: están por tratamiento, en `Tratamientos` (`
 
 ## Para la Fase 3
 
-1. **El calendario sigue sin compartir con la cuenta de servicio** (lo dijo la Fase 1 y sigue igual). Te
-   bloquea: pídeselo al humano antes de empezar.
+1. **El calendario YA está compartido con la cuenta de servicio** (el humano, 24-sep, *«hacer cambios y
+   ver todos los detalles»*). Verificado: `GET /calendars/{id}` da `200` («Agente de voz clinica») y el
+   permiso es **`writer`**. Se añadió a la `calendarList` de la cuenta de servicio para poder leer el
+   permiso. **El `ESTADO.md` de la Fase 1 todavía dice que no está compartido: ya no es verdad.**
 2. **Lo que cambia en los bloques:** nombres de herramienta en `30`, `50`, `60`; retirar el `70`; el `60`
    podrá pasar la llamada si se configura `transferCall`.
 3. **Las herramientas de calendario nativas llevan `timeZone: Europe/Madrid` escrito a mano** en su
@@ -239,24 +254,28 @@ duraciones** no están en `Config`: están por tratamiento, en `Tratamientos` (`
 
 ## Lo que no quedó cerrado
 
-1. **La llamada de `Talk`** que oye «sesenta euros». Guion arriba. Es del humano.
+1. **Probar en llamada el arreglo del teléfono** (`v15`, ver arriba). Una llamada por `Talk`.
 2. **La reprueba por teléfono**, cuando haya número (Fase 0). Decisión del humano: al final, de golpe.
 3. **El resumen de llamada sigue en inglés** (heredado de la Fase 1). No es de esta fase y no se tocó
    `analysisPlan`.
 4. **El saludo es más largo.** Lleva ahora la frase de privacidad, porque el §9 pide el aviso en el
-   primer mensaje y en voz el primer mensaje es el `firstMessage`. Son unos cuatro segundos más. Si
-   molesta, se acorta la frase en `Config` → `privacidad` (lo decide la clínica), o se quita
-   `{{privacidad}}` de `contenido/mensajes/primer-mensaje.md` (entonces solo lo dice si se lo preguntan).
-   Para la Fase 4.
+   primer mensaje y en voz el primer mensaje es el `firstMessage`. Son unos cuatro segundos más. **El
+   humano lo oyó y lo dio por bueno (24-sep).** Si algún día molesta, se acorta la frase en `Config` →
+   `privacidad`.
 5. **El `30` dice «dos o tres opciones»** y el `20`/`50` dicen «como mucho dos». El del `30` es de la V1,
    palabra por palabra, y no se toca. En la práctica manda el flujo del `50`. Para la Fase 4, si se nota.
 6. **La despedida puede salir dos veces**: la del `20` y el `endCallMessage` si cuelga el bot. Igual que
    en la Fase 1. Para la Fase 4.
-7. **`/code-review` y `/security-review` no se han pasado**: trabajan sobre un diff y el repo no está en
-   git. Lo que hay en su lugar: la batería de 82 pruebas (el filtro tratado como control de seguridad:
-   valores raros, columnas ausentes o duplicadas, notas sueltas, columnas desconocidas, inyección de
-   plantillas, segunda red de fugas, `PATCH` que pierde campos) y las dos pruebas de aborto contra la
-   hoja real. Si el humano inicia git, conviene pasarlas.
+7. **Revisión del código (24-sep, al subirlo a git), hecha a mano, fichero a fichero.** Salieron y se
+   arreglaron cinco cosas: ninguna llamada de red tenía tiempo límite (una API colgada dejaba el bucle
+   parado para siempre sin decir nada; ahora 30 s); `ultimo-prompt-*.md` se escribía **antes** de
+   publicar (ahora solo si se ha publicado o ya estaba); el contador decía «1 cargadas»; una variable de
+   entorno vacía no caía al `.env`; la prueba del `25` comparaba bytes y git normaliza los finales de
+   línea (ahora compara el texto). Además, antes del primer commit se buscó en los 84 ficheros cada
+   valor secreto del `.env` y de la cuenta de servicio, y patrones de clave: **ninguno**. Queda sin
+   ejercitar contra Vapi real el `PATCH` de la herramienta de Sheets: para Dentalvis no hace falta, así
+   que la primera vez será al dar de alta otra clínica con otra hoja (Fase 5). Si Vapi rechazara el
+   formato, el compilador para antes de tocar el asistente.
 8. **`npm install` avisó** de que `esbuild` tiene un script de instalación sin aprobar (npm 11). Todo
    funciona igual (`tsx` y `vitest` corren); si algún día fallan con un error de `esbuild`, es
    `npm approve-scripts esbuild`.
@@ -273,7 +292,7 @@ duraciones** no están en `Config`: están por tratamiento, en `Tratamientos` (`
 - **§10:** *«≈ 0,12 € por llamada»* → *«≈ 0,12 € por minuto, es decir ≈ 0,37 € por llamada de tres minutos»*.
 - Las dos marcadas como **YA CORREGIDA** en `fases/ORQUESTACION.md` (contradicciones 1 y 3).
 
-### 1. El `30` no puede cruzar «palabra por palabra» entero — **PROPUESTA, PENDIENTE DE APROBAR**
+### 1. El `30` no puede cruzar «palabra por palabra» entero — **APROBADA Y APLICADA A `PLAN.md` §5 (24-sep)**
 
 - **Qué dice el §5:** *«Van palabra por palabra de la V1. No se reescriben, no se "mejoran", no se
   resumen»*, de `25` y `30`.
@@ -287,7 +306,7 @@ duraciones** no están en `Config`: están por tratamiento, en `Tratamientos` (`
   > la Fase 3) y **cualquier dato de horario**, que nunca se escribe en el bloque: llega por
   > `{{horario}}`. El `25` va literal sin excepciones.»*
 
-### 2. Un bucle de cinco minutos en Vercel no es «sin suscripción» — **PROPUESTA, PENDIENTE DE APROBAR**
+### 2. Un bucle de cinco minutos en Vercel no es «sin suscripción» — **APROBADA Y APLICADA A `PLAN.md` §6, §8 y §10 (24-sep)**
 
 - **Qué dicen el §2 y el §8:** compilador *«cada 5 minutos»*. **Qué dice el §6:** Node + Vercel, *«sin
   suscripción»*.
@@ -308,7 +327,7 @@ duraciones** no están en `Config`: están por tratamiento, en `Tratamientos` (`
 - *Alternativa que existe si algún día se prefiere no pagar Pro:* un cron externo gratuito (tipo
   cron-job.org) que llame a `api/compilar` cada cinco minutos. No es lo decidido.
 
-### 3. Detalles del §4 y el §5 que se han quedado atrás por decisiones ya tomadas — **PROPUESTA, PENDIENTE**
+### 3. Detalles del §2, §4, §5 y §8 que se habían quedado atrás — **APROBADA Y APLICADA A `PLAN.md` (24-sep)**
 
 Son decisiones del humano ya aplicadas en el código; esto es solo para que el plan no las contradiga:
 
@@ -322,3 +341,12 @@ Son decisiones del humano ya aplicadas en el código; esto es solo para que el p
   herramientas nativas (lo retira la Fase 3).
 - **§2 / §8 Fase 2:** *«rellena huecos → `PATCH /assistant/{id}`»* → que diga que el `PATCH` lleva
   también `firstMessage`, `endCallMessage` y `voicemailMessage`, compilados con los mismos huecos.
+
+### 4. `{{customer.number}}` sin número — **AÑADIDO A `PLAN.md` §5 junto con la 3 (24-sep)**
+
+- La tabla de huecos del §5 decía que `{{customer.number}}` se convierte en *«el número del paciente»*.
+  La llamada de `Talk` del 24-sep demostró que, **cuando no hay número, Vapi deja el texto
+  `{{customer.number}}` sin sustituir** (acabó copiado en la hoja como teléfono; ver arriba).
+- Se añadió al §5 un aviso en esa fila: el prompt tiene que enseñarle al modelo a distinguirlo. Es un
+  hecho comprobado, no una decisión, y va dentro de la corrección de la tabla de huecos que el humano
+  ya había aprobado.
