@@ -1,12 +1,45 @@
 // Prepara la hoja de una clínica: crea las pestañas que falten con sus cabeceras, la validación de
 // `público` (solo «sí» o «no»), la pestaña LÉEME y, si se le da, una semilla de filas.
 //
-// Es idempotente y conservador: una pestaña que ya existe y tiene datos NO se toca. Así se puede
-// pasar sobre la hoja de una clínica que ya está en uso sin miedo a pisarle nada.
+// Es idempotente y conservador: una pestaña que ya existe y tiene datos NO se toca, con una sola
+// excepción: si el esquema tiene una columna que la pestaña aún no tiene, se AÑADE su cabecera al
+// final de la primera fila. Nunca se mueve, se renombra ni se borra nada de lo que ya hay. Así se
+// puede pasar sobre la hoja de una clínica que ya está en uso sin miedo a pisarle nada.
 
 import { tokenDeAcceso, ALCANCE_HOJAS } from "../google/cuenta-servicio.js";
-import { PESTANAS, PESTANA_LEEME, normalizar } from "./esquema.js";
+import { PESTANAS, PESTANA_LEEME, normalizar, type Pestana } from "./esquema.js";
 import { TEXTO_LEEME } from "./leeme.js";
+
+/**
+ * Qué columnas del esquema le faltan a una pestaña que ya tiene cabeceras, y en qué columna (índice
+ * desde 0) va cada una: detrás de la última cabecera escrita. Si la primera fila no tiene NINGUNA
+ * cabecera conocida no es una fila de cabeceras (son datos, o una pestaña de otro formato): no se toca.
+ */
+export function cabecerasQueFaltan(
+  pestana: Pestana,
+  primeraFila: readonly string[],
+): { reconocida: boolean; faltan: { columna: string; indice: number }[] } {
+  const escritas = primeraFila.map((c) => normalizar(String(c ?? "")));
+  const reconocida = pestana.columnas.some((c) => escritas.includes(normalizar(c)));
+  if (!reconocida) return { reconocida, faltan: [] };
+  let siguiente = escritas.reduce((ultima, c, i) => (c ? i : ultima), -1) + 1;
+  const faltan = pestana.columnas
+    .filter((c) => !escritas.includes(normalizar(c)))
+    .map((columna) => ({ columna, indice: siguiente++ }));
+  return { reconocida, faltan };
+}
+
+/** 0 → A, 25 → Z, 26 → AA. */
+export function letraDeColumna(indice: number): string {
+  let n = indice + 1;
+  let letras = "";
+  while (n > 0) {
+    const resto = (n - 1) % 26;
+    letras = String.fromCharCode(65 + resto) + letras;
+    n = Math.floor((n - 1) / 26);
+  }
+  return letras;
+}
 
 type Fila = Record<string, string>;
 
@@ -43,14 +76,16 @@ export async function prepararHoja(spreadsheetId: string, semilla?: Semilla): Pr
   const meta = await api<{ sheets: { properties: PropiedadesPestana }[] }>("GET", "?fields=sheets.properties(sheetId,title,index)");
   const existentes = new Map(meta.sheets.map((s) => [s.properties.title, s.properties]));
 
-  // ¿Qué pestañas existentes tienen datos? Esas no se tocan.
+  // ¿Qué pestañas existentes tienen datos? Esas no se tocan (salvo para añadir columnas nuevas).
   const conDatos = new Set<string>();
+  const primeraFila = new Map<string, string[]>();
   if (existentes.size) {
     const params = new URLSearchParams();
     const titulos = [...existentes.keys()];
     for (const t of titulos) params.append("ranges", `'${t}'!A1:Z3`);
     const lote = await api<{ valueRanges: { values?: string[][] }[] }>("GET", `/values:batchGet?${params}`);
     lote.valueRanges.forEach((v, i) => {
+      primeraFila.set(titulos[i]!, (v.values?.[0] ?? []).map((c) => String(c ?? "")));
       if ((v.values ?? []).some((fila) => fila.some((celda) => String(celda).trim()))) conDatos.add(titulos[i]!);
     });
   }
@@ -64,11 +99,26 @@ export async function prepararHoja(spreadsheetId: string, semilla?: Semilla): Pr
     for (const rep of r.replies) existentes.set(rep.addSheet.properties.title, rep.addSheet.properties);
     hecho.push(`Pestañas creadas: ${nuevas.join(", ")}`);
   }
-  for (const t of ORDEN.filter((t) => conDatos.has(t))) hecho.push(`${t}: ya tenía datos, no se ha tocado`);
+  // 1 bis. A las pestañas con datos solo se les añaden, al final de la primera fila, las columnas del
+  // esquema que aún no tienen (por ejemplo `id_llamada`, que llegó en la Fase 3).
+  const datos: { range: string; values: string[][] }[] = [];
+  for (const t of ORDEN.filter((t) => conDatos.has(t))) {
+    const pestana = Object.values(PESTANAS).find((p) => p.nombre === t);
+    const { reconocida, faltan } = pestana ? cabecerasQueFaltan(pestana, primeraFila.get(t) ?? []) : { reconocida: true, faltan: [] };
+    if (!reconocida) {
+      hecho.push(`${t}: tiene datos pero su primera fila no son las cabeceras del esquema; no se ha tocado`);
+      continue;
+    }
+    if (!faltan.length) {
+      hecho.push(`${t}: ya tenía datos, no se ha tocado`);
+      continue;
+    }
+    for (const f of faltan) datos.push({ range: `'${t}'!${letraDeColumna(f.indice)}1`, values: [[f.columna]] });
+    hecho.push(`${t}: tenía datos; solo se ${faltan.length === 1 ? "ha añadido la columna" : "han añadido las columnas"} ${faltan.map((f) => f.columna).join(", ")}`);
+  }
 
   // 2. Escribir cabeceras, semilla y LÉEME solo en las pestañas vacías.
   const vacias = ORDEN.filter((t) => !conDatos.has(t));
-  const datos: { range: string; values: string[][] }[] = [];
   for (const pestana of Object.values(PESTANAS)) {
     if (!vacias.includes(pestana.nombre)) continue;
     const filas = semilla ? semillaDe(pestana.nombre, semilla) : [];

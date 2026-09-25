@@ -35,22 +35,24 @@ export const PESTANAS = {
     columnas: ["día", "de", "a"],
     obligatorias: ["día", "de", "a"],
   },
+  // Las tres que escribe el asistente llevan `id_llamada` (el callId de Vapi): enlaza la cita o el
+  // escalado con su llamada y su coste, y permite no repetir una fila si Vapi reenvía un aviso.
   citas: {
     nombre: "Citas",
     columnas: [
       "fecha_creacion", "fecha_cita", "hora_cita", "duracion_min", "tratamiento", "gabinete",
-      "paciente", "telefono", "quien_llama", "id_evento", "estado", "notas",
+      "paciente", "telefono", "quien_llama", "id_evento", "estado", "notas", "id_llamada",
     ],
     obligatorias: [],
   },
   llamadas: {
     nombre: "Llamadas",
-    columnas: ["fecha", "duracion", "telefono", "resumen", "transcripcion", "motivo_fin", "coste"],
+    columnas: ["fecha", "duracion", "telefono", "resumen", "transcripcion", "motivo_fin", "coste", "id_llamada"],
     obligatorias: [],
   },
   escalados: {
     nombre: "Escalados",
-    columnas: ["fecha", "telefono", "nombre", "motivo", "detalle", "estado"],
+    columnas: ["fecha", "telefono", "nombre", "motivo", "detalle", "estado", "id_llamada"],
     obligatorias: [],
   },
 } as const satisfies Record<string, Pestana>;

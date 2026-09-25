@@ -200,5 +200,6 @@ describe("rellenar huecos", () => {
 
 it("la plantilla de pestañas coincide con el PLAN.md §4", () => {
   expect(Object.values(PESTANAS).map((p) => p.nombre)).toEqual(["Config", "Tratamientos", "FAQ", "Horarios", "Citas", "Llamadas", "Escalados"]);
-  expect(PESTANAS.llamadas.columnas).toEqual(["fecha", "duracion", "telefono", "resumen", "transcripcion", "motivo_fin", "coste"]);
+  expect(PESTANAS.llamadas.columnas).toEqual(["fecha", "duracion", "telefono", "resumen", "transcripcion", "motivo_fin", "coste", "id_llamada"]);
+  for (const p of [PESTANAS.citas, PESTANAS.llamadas, PESTANAS.escalados]) expect(p.columnas).toContain("id_llamada");
 });

@@ -18,5 +18,5 @@ Esto se hace sin decirlo en voz alta. El paciente no tiene que enterarse de que 
 
 A la agenda no le pases ningún identificador: ya sabe cuál es. A la hoja, en cambio, a veces se le pide. Si hace falta, estos son los valores exactos, y no hay otros:
 - identificador de la hoja: {{hoja_id}}
-- rango: Llamadas!A:Z
+- rango: Llamadas_fase1!A:Z
 No los cambies, no los acortes y no te inventes otros. Si pones cualquier otra cosa, la fila se pierde en silencio y la clínica se queda sin el aviso.
