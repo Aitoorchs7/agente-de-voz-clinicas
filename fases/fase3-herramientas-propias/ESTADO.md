@@ -1,16 +1,69 @@
 # ESTADO — Fase 3: Las herramientas propias
 
-> **ESTADO: PENDIENTE.** Esta fase no ha empezado o no ha terminado.
+> **ESTADO: EN CURSO** (arrancada el 25-sep-2026). Todavía no es un traspaso.
 >
-> Esto es una **plantilla vacía**, no un traspaso. Si eres el agente de la Fase 4 y encuentras
-> este fichero así, **para y dilo**: tu punto de partida no existe todavía. No supongas lo que
-> habría aquí ni lo reconstruyas leyendo el código — pregunta al humano.
+> Si eres el agente de la Fase 4 y encuentras este fichero así, **para y dilo**: tu punto de partida no
+> existe todavía. No supongas lo que habría aquí ni lo reconstruyas leyendo el código — pregunta al humano.
 
-Rellena este fichero al terminar tu fase. Es **el único canal** con la Fase 4: ese agente arranca
-en frío y no lee esta conversación.
+---
 
-Fecha de cierre:
-Quién lo cierra:
+## ⏳ Lo que necesito de ti ahora
+
+### 1. La llamada 1 — captura del contrato + teléfono + migración (25-sep, 22:10)
+
+- **A qué asistente:** **`PRUEBAS F3 · no usar en demos`** (panel de Vapi → Assistants → ese → **Talk**).
+  **No a Diego.** Es una copia exacta de Diego (mismo prompt `v16`, voz, modelo y herramientas nativas)
+  con dos cosas más: la herramienta `anotar` y el servidor apuntando a mi receptor.
+- **Qué hacer:**
+  1. Pide cita para **una limpieza**, el día que quieras dentro del horario.
+  2. Da un **nombre y un apellido inventados**.
+  3. Cuando llegue el teléfono, **fíjate en si te lo PIDE o te ofrece «este mismo número»**. Tiene que
+     pedírtelo: en una llamada web no hay número. Dale uno **inventado de nueve cifras**.
+  4. Confirma la cita.
+  5. **Despídete y deja que cuelgue él.** Si cuelgas tú antes, puede no llegar a apuntar la fila en
+     `Llamadas_fase1`, y es una de las tres cosas que compruebo.
+- **Qué saco de esta llamada:** (a) que el bot pide el teléfono; (b) los dos POST reales, `tool-calls` y
+  `end-of-call-report`, que son el contrato; (c) la fila en `Llamadas_fase1`, con el teléfono en cifras.
+- **El receptor y el túnel están corriendo ahora en mi sesión.** Si cuando llames no responde bien
+  (el bot dice que no puede apuntar, o se queda callado tras dar el nombre), dímelo y los relanzo: la
+  dirección del túnel cambia cada vez que se arranca.
+- La cita que cree es de prueba (irá al calendario «Gabinete 1» por la herramienta nativa). La borraré
+  al comprobarla, salvo que me digas que la deje.
+
+### 2. Los IDs de «Gabinete 2» y «Gabinete 3»
+
+La cuenta de servicio **no ve** los calendarios que se comparten con ella hasta que se le dan sus IDs:
+Google no los añade solos a su lista. Solo ve el que ya había (que ahora se llama «Gabinete 1 », con un
+espacio al final; da igual, el nombre no se usa).
+
+Para cada uno: Google Calendar → ⚙ Configuración → el calendario → **Integrar el calendario** → **ID
+del calendario** (algo como `…@group.calendar.google.com`). Pégamelos en la conversación: no son
+secretos, van a `fichas/dentalvis/ficha.json`.
+
+---
+
+## Lo hecho hasta ahora (25-sep-2026)
+
+| Qué | Cómo se comprobó |
+| --- | --- |
+| Correcciones aprobadas a `PLAN.md`, `ORQUESTACION.md` y mi `CLAUDE.md` | Commit `206e397` |
+| Catálogo de Gemini | `gemini-3.5-flash` y `gemini-3.1-flash-lite` contestan; los `2.5`, `404`. Sin cambios |
+| **Migración de `Llamadas`** | La vieja (8 columnas, sin cabecera, 2 filas) es ahora **`Llamadas_fase1`**; la nativa de Diego escribe ahí (`metadata.range` con PATCH completo + GET, y el `70`). `Llamadas` nueva con las columnas del §4 + `id_llamada` |
+| Diego `v15 → v16` | GET comparado con la copia de antes: **la única diferencia es la línea del rango**. Modelo, `toolIds`, voz, todo igual. Copia en `registro/asistente-antes-fase3.json` |
+| `id_llamada` en `Citas`, `Llamadas`, `Escalados` | En `esquema.ts`, en Dentalvis y en la plantilla. `preparar-hoja` añade ya solo las columnas nuevas a pestañas con datos |
+| Upstash Redis | `PING` y un `EVAL` con `SET NX PX` desde aquí: responden |
+| `cloudflared` 2026.9.3 | Instalado con `winget` (MSI oficial, hash verificado) |
+| Credencial del webhook | Credencial `bearer` en Vapi (`a6492211-…`); el secreto, generado y guardado solo en el `.env` |
+| Herramientas propias en Vapi, **sin URL propia** | `consultar_huecos` `b2da16f7-…` · `anotar` `132c5407-…` · `crear_cita` `0b220ead-…` · `escalar_a_recepcion` `deeb0534-…` · colgar (`endCall`) `dea8a9da-…`. **Ninguna enganchada a Diego** |
+| Asistente de pruebas `0854f732-…` | Creado como copia de Diego; comparado campo a campo |
+
+**Dos cosas de Vapi que conviene saber**, vistas en su especificación OpenAPI (`api.vapi.ai/api-json`):
+
+- `endCallFunctionEnabled`, `silenceTimeoutSeconds` y `backgroundDenoisingEnabled` **ya no existen** en la
+  API. Diego los conserva de antes y le funcionan, pero un asistente nuevo no puede llevarlos: para colgar
+  necesita la herramienta `endCall`. Y a los asistentes nuevos Vapi les añade de oficio un respaldo de
+  transcriptor que Diego no tiene.
+- `server.timeoutSeconds` vale **20 s** por defecto y, sin `backoffPlan`, **Vapi no reintenta**.
 
 ---
 
@@ -53,4 +106,9 @@ Quién lo cierra:
 > en silencio**: anótalo aquí y en `fases/ORQUESTACION.md` con la corrección concreta que propones
 > (qué sección, qué dice, qué debería decir y por qué). Corregir el plan lo decide el humano.
 
--
+- **Aplicadas el 25-sep-2026, con aprobación del humano:** §6 (Vercel Pro desde el primer despliegue;
+  patrón de bloqueo sí, almacén no; la documentación de Vapi se contradice sobre el webhook; qué es el
+  «aviso»), §4 (calendarios por gabinete en la ficha, `id_llamada`), §10 (coherente con lo de Vercel) y
+  `ORQUESTACION.md` (diez bloques, un solo endpoint).
+- **Pendientes, ya aprobadas:** reescribir en el §6 la frase del formato del webhook con lo que diga el
+  fixture; marcar en el §5 el `70` y `{{hoja_id}}` como retirados, al cerrar la fase.

@@ -1,4 +1,8 @@
-// Cliente mínimo de la API de Vapi: solo lo que usa el compilador.
+// Cliente mínimo de la API de Vapi. `ClienteVapi` es lo que usa el compilador; `ClienteVapiCompleto`
+// añade las altas (herramientas, asistentes, credenciales) y la lectura de llamadas de la Fase 3.
+//
+// ⚠ PATCH /assistant y PATCH /tool REEMPLAZAN los objetos anidados enteros: `model`, `metadata`,
+// `function`, `server`... se mandan siempre completos y se comprueban con un GET después.
 
 import { variableObligatoria } from "../entorno.js";
 
@@ -38,7 +42,24 @@ export interface ClienteVapi {
   listarAsistentes(): Promise<Asistente[]>;
 }
 
-export function clienteVapi(clave = variableObligatoria("VAPI_PRIVATE_KEY"), f: typeof fetch = fetch): ClienteVapi {
+/** Credencial con la que Vapi se autentica ante nuestro servidor (`server.credentialId`). */
+export interface Credencial {
+  id: string;
+  provider: string;
+  name?: string;
+  [otra: string]: unknown;
+}
+
+export interface ClienteVapiCompleto extends ClienteVapi {
+  listarHerramientas(): Promise<Herramienta[]>;
+  crearHerramienta(cuerpo: Record<string, unknown>): Promise<Herramienta>;
+  crearAsistente(cuerpo: Record<string, unknown>): Promise<Asistente>;
+  listarCredenciales(): Promise<Credencial[]>;
+  crearCredencial(cuerpo: Record<string, unknown>): Promise<Credencial>;
+  leerLlamada(id: string): Promise<Record<string, unknown>>;
+}
+
+export function clienteVapi(clave = variableObligatoria("VAPI_PRIVATE_KEY"), f: typeof fetch = fetch): ClienteVapiCompleto {
   const pedir = async <T>(metodo: string, camino: string, cuerpo?: unknown): Promise<T> => {
     // Con tiempo límite: sin él, una API colgada deja el bucle parado para siempre sin decir nada.
     const r = await f(`https://api.vapi.ai${camino}`, {
@@ -56,5 +77,11 @@ export function clienteVapi(clave = variableObligatoria("VAPI_PRIVATE_KEY"), f: 
     leerHerramienta: (id) => pedir("GET", `/tool/${id}`),
     actualizarHerramienta: (id, cambios) => pedir("PATCH", `/tool/${id}`, cambios),
     listarAsistentes: () => pedir("GET", `/assistant?limit=100`),
+    listarHerramientas: () => pedir("GET", `/tool?limit=100`),
+    crearHerramienta: (cuerpo) => pedir("POST", `/tool`, cuerpo),
+    crearAsistente: (cuerpo) => pedir("POST", `/assistant`, cuerpo),
+    listarCredenciales: () => pedir("GET", `/credential`),
+    crearCredencial: (cuerpo) => pedir("POST", `/credential`, cuerpo),
+    leerLlamada: (id) => pedir("GET", `/call/${id}`),
   };
 }
