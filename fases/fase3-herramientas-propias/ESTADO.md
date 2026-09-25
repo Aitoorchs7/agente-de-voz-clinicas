@@ -9,7 +9,7 @@
 
 ## ⏳ Lo que necesito de ti ahora
 
-### 1. La llamada 1 — captura del contrato + teléfono + migración (25-sep, 22:10)
+### 1. La llamada 1 — captura del contrato + teléfono + migración (lista desde el 25-sep, 22:48)
 
 - **A qué asistente:** **`PRUEBAS F3 · no usar en demos`** (panel de Vapi → Assistants → ese → **Talk**).
   **No a Diego.** Es una copia exacta de Diego (mismo prompt `v16`, voz, modelo y herramientas nativas)
@@ -24,9 +24,10 @@
      `Llamadas_fase1`, y es una de las tres cosas que compruebo.
 - **Qué saco de esta llamada:** (a) que el bot pide el teléfono; (b) los dos POST reales, `tool-calls` y
   `end-of-call-report`, que son el contrato; (c) la fila en `Llamadas_fase1`, con el teléfono en cifras.
-- **El receptor y el túnel están corriendo ahora en mi sesión.** Si cuando llames no responde bien
-  (el bot dice que no puede apuntar, o se queda callado tras dar el nombre), dímelo y los relanzo: la
-  dirección del túnel cambia cada vez que se arranca.
+- **El receptor y el túnel están corriendo ahora en mi sesión**, y el túnel va **vigilado**: el primero
+  murió solo a los 40 minutos (Cloudflare da de baja los túneles rápidos sin avisar), así que si cae se
+  levanta otro y el asistente de pruebas se reapunta solo. Si aun así el bot se queda callado tras dar
+  el nombre, o dice que no puede apuntar, dímelo: una llamada en curso no sobrevive a un cambio de túnel.
 - La cita que cree es de prueba (irá al calendario «Gabinete 1» por la herramienta nativa). La borraré
   al comprobarla, salvo que me digas que la deje.
 
@@ -56,6 +57,8 @@ secretos, van a `fichas/dentalvis/ficha.json`.
 | Credencial del webhook | Credencial `bearer` en Vapi (`a6492211-…`); el secreto, generado y guardado solo en el `.env` |
 | Herramientas propias en Vapi, **sin URL propia** | `consultar_huecos` `b2da16f7-…` · `anotar` `132c5407-…` · `crear_cita` `0b220ead-…` · `escalar_a_recepcion` `deeb0534-…` · colgar (`endCall`) `dea8a9da-…`. **Ninguna enganchada a Diego** |
 | Asistente de pruebas `0854f732-…` | Creado como copia de Diego; comparado campo a campo |
+| Hora de la clínica, fechas y horas en palabras, validación de teléfono y nombre (de la V1) | Pruebas de la franja 23:00–01:00 minuto a minuto y de los cambios de hora del 29-mar y 25-oct-2026 |
+| **Bloqueo temporal** en Redis (scripts Lua atómicos), ficha de la llamada y candado de la hoja | La misma batería en memoria y **contra Upstash de verdad**: 18 de 18, incluidas **diez llamadas a la vez por la misma hora → se la lleva una** |
 
 **Dos cosas de Vapi que conviene saber**, vistas en su especificación OpenAPI (`api.vapi.ai/api-json`):
 
