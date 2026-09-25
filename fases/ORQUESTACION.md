@@ -114,8 +114,8 @@ tal cual, que es la materia prima que la Fase 2 trocea en bloques · dónde vive
 
 ### Fase 2 → Fase 3
 **El lector de la hoja y su interfaz** — la Fase 3 lo reutiliza, no lo reescribe · `spreadsheetId` de
-la plantilla y de la clínica de pruebas · los nueve bloques en `contenido/bloques/` ya portados a
-voz · cómo se dispara el compilador a mano y dónde está el bucle de 5 minutos · dónde queda el
+la plantilla y de la clínica de pruebas · los diez bloques en `contenido/bloques/` ya portados a
+voz (el `70` es provisional y cuenta hasta que la Fase 3 lo retire) · cómo se dispara el compilador a mano y dónde está el bucle de 5 minutos · dónde queda el
 registro con el contador · qué campos de `Config` existen, porque las herramientas los van a
 necesitar (zona horaria, teléfono de recepción, gabinetes, duraciones).
 
@@ -160,17 +160,17 @@ Agente de voz demo/
 ├── .claude/
 │   └── skills/                 ← las 14 skills propias del proyecto
 ├── contenido/
-│   └── bloques/                ← §5: los nueve bloques, con `orden` y `activo` (Fase 2)
+│   └── bloques/                ← §5: los diez bloques, con `orden` y `activo` (Fase 2; el `70`, provisional, lo retira la Fase 3)
 ├── fichas/
 │   └── <clinica>/              ← `spreadsheetId` + identidad de cada clínica (Fase 2, Fase 5)
 ├── src/
 │   ├── hoja/                   ← lector de Sheets COMPARTIDO (Fase 2, lo usa la Fase 3)
 │   ├── compilador/             ← filtro de `público`, contador, render, PATCH (Fase 2)
 │   └── herramientas/           ← consultar_huecos, anotar, crear_cita, escalar_a_recepcion (Fase 3)
-├── api/                        ← endpoints de Vercel (Fase 3)
-│   ├── vapi/tools.ts           ← el webhook de `tool-calls`
-│   ├── vapi/end-of-call.ts     ← `end-of-call-report` → pestaña `Llamadas`
-│   └── compilar.ts             ← disparo manual del compilador (el botón de la demo)
+├── api/                        ← endpoints de Vercel
+│   ├── vapi.ts                 ← el ÚNICO webhook de Vapi (Fase 3): `tool-calls` y `end-of-call-report`
+│   │                             llegan a la misma serverUrl del asistente y se reparten por `message.type`
+│   └── compilar.ts             ← el compilador desde el cron de Vercel Pro (final del proyecto)
 ├── fixtures/
 │   └── vapi/                   ← POSTs reales capturados: el contrato congelado (Fase 3)
 ├── scripts/                    ← verificación de arranque del modelo, utilidades de operación

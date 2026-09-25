@@ -130,7 +130,7 @@ Empezar con una voz **peninsular** del catálogo que dé mejor latencia en prueb
 
 ## 4. El modelo de personalización — la ficha de la clínica
 
-Cada clínica es **una hoja de cálculo** (un `spreadsheetId`) más **una fila de identidad**. Nada más. Dar de alta una clínica nueva es duplicar una plantilla y rellenarla.
+Cada clínica es **una hoja de cálculo** (un `spreadsheetId`) más **una fila de identidad** (`fichas/<clínica>/ficha.json`): su hoja, su asistente y **sus calendarios de Google, uno por gabinete**. Nada más. Dar de alta una clínica nueva es duplicar una plantilla y rellenarla. *(Un calendario por gabinete, como en la V1: decidido el 25-sep-2026. El `gabinete` de cada fila de `Tratamientos` es el nombre de uno de esos calendarios.)*
 
 ### Las siete pestañas
 
@@ -143,6 +143,8 @@ Cada clínica es **una hoja de cálculo** (un `spreadsheetId`) más **una fila d
 | **Citas** | Toda cita creada, con quién llamó y para quién | Se rellena solo |
 | **Llamadas** | Fecha, duración, teléfono, resumen, transcripción, motivo de fin, coste | Se rellena solo |
 | **Escalados** | Lo que el bot no supo resolver | **Se revisa cada mañana** |
+
+`Citas`, `Llamadas` y `Escalados` llevan además una columna **`id_llamada`** (el identificador de la llamada en Vapi): enlaza cada cita y cada escalado con su llamada y su coste, y evita filas repetidas si Vapi reenvía un aviso. *(Decidido el 25-sep-2026.)*
 
 ### La columna `público`
 
@@ -234,7 +236,7 @@ Lo que el bot **puede hacer**. Todo lo demás lo responde desde el prompt, que y
 | `consultar_huecos` | Custom (webhook) | Huecos reales según **duración del tratamiento** y **gabinete**. No es un free/busy pelado | 2–3 opciones, en lenguaje natural |
 | `anotar` | Custom (webhook) | Valida **un dato cada vez** (nombre, teléfono, tratamiento, día) | OK, o el problema concreto |
 | `crear_cita` | Custom (webhook) | Evento en Calendar **+** fila en `Citas`, de forma atómica | Confirmación o el motivo del fallo |
-| `escalar_a_recepcion` | Custom (webhook) | Fila en `Escalados` + aviso | Confirmación |
+| `escalar_a_recepcion` | Custom (webhook) | Fila en `Escalados` + aviso (el **aviso** es la frase con la que el bot le dice al paciente que recepción le llamará; no hay aviso en tiempo real a la clínica: decidido el 25-sep-2026) | Confirmación |
 | `transferir_llamada` | Nativa Vapi | Pasa al teléfono de recepción | — |
 | `finalizar_llamada` | Nativa Vapi | Cuelga | — |
 | *(al colgar)* | `end-of-call-report` | Fila en `Llamadas` con resumen, transcripción, duración y coste | — |
@@ -253,7 +255,7 @@ Pero se quedan cortas en cuanto la clínica es real:
 
 - La nativa comprueba **un rango libre/ocupado**. No sabe que una limpieza dura 45 minutos y una revisión 30, ni que la ortodoncia va al Gabinete 2.
 - No aplica el horario de la clínica: te diría que el domingo a las cuatro de la mañana está libre.
-- No puede hacer **bloqueo temporal**, y sin bloqueo temporal dos llamadas simultáneas cogen la misma hora. Las plantillas de reservas del curso resuelven esto exactamente así —crear un registro temporal al consultar y borrarlo al confirmar— y ese patrón se copia tal cual.
+- No puede hacer **bloqueo temporal**, y sin bloqueo temporal dos llamadas simultáneas cogen la misma hora. Las plantillas de reservas del curso resuelven esto exactamente así —crear un registro temporal al consultar y borrarlo al confirmar— y ese patrón se copia tal cual. **Se copia el patrón, no el almacén:** la plantilla de `PAGO` guarda el registro temporal en Airtable, casado por el ID de llamada, **sin caducidad** y con una carrera entre buscar y crear (dos llamadas pueden ver la hora libre y bloquearla las dos). Aquí va en un almacén con operación atómica y caducidad: Redis (Upstash, región UE), decidido el 25-sep-2026.
 
 **Camino:** nativas en la fase 1 para tener algo funcionando en horas; propias en la fase 3, que es cuando se prueban dos llamadas a la vez.
 
@@ -266,6 +268,8 @@ Vapi manda al `serverUrl` un POST con `message.type = "tool-calls"` y espera **e
 ```
 
 > ⚠️ **Ojo con las plantillas del curso.** Usan `message.toolCalls[0].id` y `.function.arguments`. La documentación actual de Vapi usa **`toolCallList`**, con `id`, `name` y `arguments` directamente. Los flujos de n8n de `PAGO` siguen siendo válidos como **arquitectura**, pero las rutas de los campos hay que verificarlas contra un webhook real antes de dar nada por bueno. **Primera tarea de la fase 3: capturar un POST real y fijar el contrato.**
+>
+> ⚠️ **Y la propia documentación de Vapi se contradice** (verificado el 25-sep-2026): `docs.vapi.ai/tools/custom-tools` usa `toolCallList[].function.arguments`; `docs.vapi.ai/server-url/events` usa `toolCallList[].parameters` —sin `function` y sin `arguments`— y además un segundo array, `toolWithToolCallList`. La plantilla del curso mezcla `toolCalls[0]` y `toolCallList[0]` en el mismo flujo. **La única fuente fiable es el POST real capturado en `fixtures/vapi/`**: la frase de arriba sobre `toolCallList` se reescribe con lo que diga ese fixture en cuanto se capture.
 
 ### El orquestador: dónde viven las herramientas propias
 
@@ -273,7 +277,7 @@ Vapi manda al `serverUrl` un POST con `message.type = "tool-calls"` y espera **e
 
 | Opción | A favor | En contra |
 | --- | --- | --- |
-| **Node + Vercel** ✅ | Todo en un repo y versionado. Las herramientas caben en el plan gratuito; **el bucle de cinco minutos del compilador no**: el cron de Vercel Hobby es una vez al día, así que hace falta el plan Pro (decidido: se contrata al desplegar, al final del proyecto). Mismo stack que el proyecto de WhatsApp. El compilador y las herramientas comparten el lector de la hoja | Hay que escribirlo |
+| **Node + Vercel** ✅ | Todo en un repo y versionado. **Vercel Pro es obligatorio desde el primer despliegue de las herramientas propias**, no solo para el cron del compilador del final: el plan Hobby es *«non-commercial personal use only»* y este proyecto es comercial (`vercel.com/docs/limits/fair-use-guidelines`, verificado el 25-sep-2026). Y además el cron de Hobby es una vez al día, así que el bucle de cinco minutos también lo necesita. Decidido: Pro se contrata al final de la Fase 3; hasta entonces las herramientas se prueban en local, detrás de un túnel. Mismo stack que el proyecto de WhatsApp. El compilador y las herramientas comparten el lector de la hoja | Hay que escribirlo |
 | n8n | Ya tienes las plantillas de reservas en `PAGO`, montadas y probadas | Otra suscripción, otro sitio donde mirar cuando algo falla, y la lógica queda en un JSON que no se revisa en un diff |
 | Vapi Code Tools | TypeScript en la infraestructura de Vapi, sin servidor | Atado a Vapi, peor de depurar, y el compilador sigue necesitando vivir fuera |
 
@@ -386,7 +390,7 @@ Para **500 llamadas al mes** de unos 3 minutos ≈ **1.500 minutos**:
 
 **≈ 0,12 € por minuto, es decir ≈ 0,37 € por llamada de tres minutos.** Un número para orientarse, no para poner en una propuesta: **los precios se verifican en vapi.ai/pricing y en Twilio antes de cotizar**, y se recalculan con llamadas reales al final de la fase 4, donde el `end-of-call-report` ya trae el coste real de cada una.
 
-**No incluye Vercel Pro**, que hace falta para el bucle de cinco minutos del compilador (§6). Es una cuota fija por cuenta, no por minuto: su precio se verifica en `vercel.com/pricing` el día que se cotice.
+**No incluye Vercel Pro**, que hace falta desde el primer despliegue de las herramientas (Hobby no admite uso comercial) y cubre también el bucle de cinco minutos del compilador (§6). Es una cuota fija por cuenta, no por minuto: su precio se verifica en `vercel.com/pricing` el día que se cotice.
 
 Dos notas que cambian la cuenta: cada línea concurrente por encima de la décima son 10 $/mes, y el modo HIPAA son 1.000 $/mes (no aplica aquí; en España el marco es el RGPD).
 

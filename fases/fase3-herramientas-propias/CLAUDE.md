@@ -48,10 +48,12 @@ Las herramientas, con lo que hace cada una y lo que devuelve (§6):
 - **No reescribes el compilador de la Fase 2.** Ni el lector de la hoja: lo **reutilizas**. Del §6:
   *«El compilador y las herramientas comparten el lector de la hoja»*. Si necesitas un campo nuevo
   de `Config`, lo añades a la hoja y al lector existente; no montas un segundo camino de lectura.
-- **No tocas los bloques del prompt.** Son de la Fase 2. Si una herramienta necesita que el bot la
-  llame de otra forma, el cambio del bloque `50` se pide, se razona, y se hace en
-  `contenido/bloques/` respetando las reglas de la Fase 2 — en particular que **`25` y `30` no se
-  tocan**.
+- **Los bloques son de la Fase 2, con la excepción que prevé el §5.** Al pasar a las herramientas
+  propias cambias los nombres de herramienta en `30`, `50` y `60` (en el `30`, **solo** los nombres:
+  lo vigila `tests/bloques.test.ts`), adaptas en `50` y `60` el flujo a las herramientas nuevas con
+  las reglas de la skill `portar-bloque-a-voz`, y **retiras el `70`** con todo lo que la Fase 2 montó
+  para él: el hueco `{{hoja_id}}`, `contenido/herramientas/google_sheets_tool.md` y la parte de
+  `src/compilador/publicar.ts` que le pone el `spreadsheetId`. **El `25` no se toca nunca.**
 - **No añades datos al prompt.** Del §6: *«Todo lo demás lo responde desde el prompt, que ya lleva
   la hoja compilada dentro: para el tamaño de datos de una clínica, meterlos en el prompt es más
   rápido, más barato y más predecible que montar un RAG.»* **No montes un RAG.**
@@ -71,11 +73,26 @@ De la **Fase 2** necesitas (está en `fases/fase2-compilador/ESTADO.md`):
 
 - **El lector de la hoja** ya escrito y su interfaz: es tu dependencia principal, lo compartes.
 - El compilador funcionando, con el filtro de `público` y el contador de filas.
-- Los nueve bloques en `contenido/bloques/`, ya portados a voz.
+- Los diez bloques en `contenido/bloques/`, ya portados a voz (el `70`, provisional, lo retiras tú).
 - El `spreadsheetId` de la hoja de la clínica de pruebas, con las siete pestañas creadas — incluidas
   `Citas`, `Escalados` y `Llamadas`, que son las que tú vas a rellenar.
-- Los campos de `Config` disponibles: zona horaria, teléfono de recepción, gabinetes, y las
-  duraciones por tratamiento en la pestaña `Tratamientos`.
+- `zona_horaria` y `telefono_recepcion` en `Config`; `gabinete` y `duracion_min` por tratamiento, en
+  `Tratamientos`; los calendarios (uno por gabinete) en la ficha, `fichas/<clínica>/ficha.json`.
+
+**Hechos comprobados (25-sep-2026)** que este fichero no recogía:
+
+- El calendario **ya está compartido** con la cuenta de servicio, con permiso `writer` (el `ESTADO.md`
+  de la Fase 1 dice lo contrario: se quedó viejo).
+- La cuota de Drive de la cuenta de servicio es **0**: no puede crear hojas ni ficheros suyos.
+- **Google se salta la validación de la hoja cuando se escribe por API.** Nada de lo que escribas en
+  `Citas`, `Llamadas` o `Escalados` lo protege un desplegable: valídalo tú.
+- En una llamada web el campo `customer` llega **vacío** (`""`), y cuando no hay número Vapi deja
+  `{{customer.number}}` **sin sustituir**, tal cual. Ya acabó una vez copiado en la hoja como teléfono.
+
+**Decisiones del humano (25-sep-2026):** un calendario por gabinete (Gabinete 1 es el que ya había);
+el bloqueo temporal en Redis (Upstash, región UE); Vercel Pro se contrata **al final de esta fase** y
+hasta entonces se trabaja en local detrás de un túnel `cloudflared`; `id_llamada` en `Citas`,
+`Llamadas` y `Escalados`; el resumen de `Llamadas`, propio y en español, con `gemini-3.1-flash-lite`.
 
 De la **Fase 1**: el `assistantId` de Vapi y las credenciales de Google (cuenta de servicio con
 acceso a Calendar y Sheets).
@@ -119,12 +136,6 @@ desplegado en Vercel, en el mismo repositorio que el compilador y los bloques»*
 4. **El POST capturado se guarda como fixture en el repo** y los tests corren contra él. Un contrato
    «fijado» que vive en la cabeza de alguien no está fijado. Si Vapi cambia el formato, quieres que
    te lo diga un test, no una demo.
-
-> **Nota sobre una contradicción del plan.** El §6 dice *«Primera tarea de la fase 2: capturar un
-> POST real y fijar el contrato»*, pero el §8 lo pone en la **Fase 3** con *(antes de nada)*, el §9
-> lo asocia a escribir el manejador (que es tuyo), y la lista de tareas de la Fase 2 no lo incluye.
-> **La tarea es tuya.** Está señalado en `fases/ORQUESTACION.md` para que se corrija en PLAN.md; no
-> lo des por resuelto por la Fase 2 sin comprobarlo.
 
 ### 4.2 El bloqueo temporal
 
@@ -196,8 +207,9 @@ desplegado en Vercel, en el mismo repositorio que el compilador y los bloques»*
     **grabación de llamadas apagada**.
 
 14. **Rango de columnas cerrado al escribir en la hoja** (§9). Si alguien deja una nota suelta bajo
-    una tabla, Google la cuenta como datos y desplaza las columnas. Tus escrituras tienen que
-    apuntar a un rango explícito, no a «la siguiente fila libre» calculada a ojo.
+    una tabla, Google la cuenta como datos y desplaza las columnas. Tus escrituras apuntan a un
+    rango explícito, en la fila libre **calculada leyendo la pestaña** —nunca con `append`— y **bajo
+    un candado**, para que dos llamadas a la vez no calculen la misma fila y una pise a la otra.
 
 ---
 
