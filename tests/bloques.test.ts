@@ -4,7 +4,9 @@
 import { existsSync, readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { interpretarBloque, leerBloques, BLOQUES_OBLIGATORIOS } from "../src/compilador/bloques.js";
+import { herramientasNombradas } from "../src/compilador/publicar.js";
 import { ruta } from "../src/entorno.js";
+import { HERRAMIENTAS } from "../src/herramientas/definiciones.js";
 
 const V1 = "C:/Users/chica/Desktop/Bot Clinica Demo V1/4 Agente";
 const hayV1 = existsSync(V1);
@@ -22,14 +24,13 @@ describe("los dos bloques que son el producto", () => {
     const nuevo = leer(ruta("contenido/bloques/30 - Que no puede decir.md")).split(/\r?\n/);
     const quitadas = original.filter((l) => !nuevo.includes(l));
     const puestas = nuevo.filter((l) => !original.includes(l));
-    expect(quitadas.length).toBe(5);
-    expect(puestas.length).toBe(6);
-    // Cada línea quitada lleva un nombre de herramienta de la Fase 3 o el dato de horario.
-    for (const l of quitadas) expect(l).toMatch(/escalar_a_recepcion|consultar_huecos|crear_cita|lunes a viernes|sábado/);
-    // Y el resto del texto, idéntico: quitando las herramientas, las líneas son las mismas palabras.
-    const sinHerramientas = (l: string) => l.replace(/escalar_a_recepcion|consultar_huecos|crear_cita|google_calendar_check|google_sheets_tool/g, "·");
-    expect(sinHerramientas(puestas[1]!)).toBe(sinHerramientas(quitadas[1]!));
-    expect(sinHerramientas(puestas[2]!)).toBe(sinHerramientas(quitadas[2]!));
+    // Fase 3: la V1 ya nombraba las herramientas propias. Solo cambia la línea de la hora concreta
+    // («llama a crear_cita con esa hora» → consultar_huecos, decidido el 25-sep) y las dos del horario.
+    expect(quitadas.length).toBe(3);
+    expect(puestas.length).toBe(4);
+    expect(quitadas[0]).toContain("llama a crear_cita con esa hora");
+    expect(puestas[0]).toBe(quitadas[0]!.replace("crear_cita", "consultar_huecos"));
+    for (const l of quitadas.slice(1)) expect(l).toMatch(/lunes a viernes|sábado/);
   });
 
   it("el 30 ya no fija ningún día de la semana a mano", () => {
@@ -38,10 +39,11 @@ describe("los dos bloques que son el producto", () => {
     expect(t).toContain("{{horario}}");
   });
 
-  it("ni el 25 ni el 30 nombran herramientas que no existen todavía", () => {
-    for (const f of ["25 - No interpretes de mas.md", "30 - Que no puede decir.md"]) {
-      expect(leer(ruta("contenido/bloques", f))).not.toMatch(/escalar_a_recepcion|consultar_huecos|crear_cita|anotar\b|no_te_entiendo/);
-    }
+  it("el 30 nombra las herramientas propias de la V1, y ninguna nativa", () => {
+    const t = leer(ruta("contenido/bloques/30 - Que no puede decir.md"));
+    expect(t).toContain("llamas a escalar_a_recepcion");
+    expect(t).toContain("los horarios salen solo de consultar_huecos");
+    expect(t).not.toMatch(/google_|crear_cita/);
   });
 });
 
@@ -51,8 +53,21 @@ describe("todos los bloques", () => {
     for (const o of BLOQUES_OBLIGATORIOS) expect(b.some((x) => x.orden === o)).toBe(true);
   });
 
-  it("ninguno nombra herramientas de la Fase 3", () => {
-    for (const b of leerBloques()) expect(b.cuerpo).not.toMatch(/escalar_a_recepcion|consultar_huecos|crear_cita|\banotar\b|no_te_entiendo/);
+  it("ninguno nombra herramientas nativas de Vapi, ni una que no exista", () => {
+    const propias = new Set(HERRAMIENTAS.map((h) => h.name));
+    for (const b of leerBloques()) {
+      expect(b.cuerpo).not.toMatch(/google_calendar|google_sheets|transferir_llamada|no_te_entiendo/);
+      for (const n of herramientasNombradas(b.cuerpo)) expect(propias.has(n)).toBe(true);
+    }
+    const todo = leerBloques().map((b) => b.cuerpo).join("\n");
+    for (const n of propias) expect(todo).toContain(n);
+  });
+
+  it("lo que salió mal en la llamada 1 no vuelve: ni {{customer.number}} ni teléfonos «separados por comas»", () => {
+    for (const b of leerBloques()) {
+      expect(b.cuerpo).not.toContain("customer.number");
+      expect(b.cuerpo).not.toMatch(/separad[oa]s por comas/);
+    }
   });
 
   it("el 90 lleva SOLO huecos: ni una cifra ni un precio", () => {

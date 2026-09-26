@@ -76,7 +76,22 @@ export function vapiFalso(inicial: { asistente: Asistente; herramientas: Herrami
   return { cliente, estado, llamadas, estropearElSiguientePatch: (f: (a: Asistente) => void) => (estropear = f) };
 }
 
+/** Diego con las herramientas propias (Fase 3). */
 export function asistenteDeDiego(): { asistente: Asistente; herramientas: Herramienta[] } {
+  const base = asistenteConNativas();
+  base.asistente.model!.toolIds = ["t-consultar", "t-anotar", "t-crear", "t-escalar", "t-colgar"];
+  base.herramientas = [
+    { id: "t-consultar", type: "function", function: { name: "consultar_huecos" } },
+    { id: "t-anotar", type: "function", function: { name: "anotar" } },
+    { id: "t-crear", type: "function", function: { name: "crear_cita" } },
+    { id: "t-escalar", type: "function", function: { name: "escalar_a_recepcion" } },
+    { id: "t-colgar", type: "endCall" },
+  ];
+  return base;
+}
+
+/** Diego como estaba hasta la Fase 3: Calendar y Sheets nativas de Vapi. */
+export function asistenteConNativas(): { asistente: Asistente; herramientas: Herramienta[] } {
   return {
     asistente: {
       id: "asistente-1",

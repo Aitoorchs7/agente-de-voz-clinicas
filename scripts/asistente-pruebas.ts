@@ -4,6 +4,9 @@
 //   npm run asistente-pruebas -- --captura --url https://<túnel>
 //       Copia de Diego tal cual (prompt, voz, modelo, nativas) + `anotar` + colgar, y un añadido al
 //       prompt para que llame a `anotar` con el nombre y el teléfono. Sirve para capturar el contrato.
+//   npm run asistente-pruebas -- --propias --url https://<túnel>
+//       Las herramientas PROPIAS: el prompt compilado de los bloques de esta rama con la hoja de
+//       Dentalvis, y solo consultar_huecos, anotar, crear_cita, escalar_a_recepcion y colgar. Sin nativas.
 //   npm run asistente-pruebas -- --url https://<túnel>
 //       Solo cambia la URL del servidor (el túnel cambia de dirección cada vez que se arranca).
 //
@@ -13,7 +16,11 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { isDeepStrictEqual } from "node:util";
 import { ruta, variableObligatoria } from "../src/entorno.js";
+import { leerBloques, leerMensajes } from "../src/compilador/bloques.js";
 import { cargarFicha } from "../src/compilador/ciclo.js";
+import { herramientasNombradas } from "../src/compilador/publicar.js";
+import { compilarFicha } from "../src/compilador/render.js";
+import { leerFicha } from "../src/hoja/lector.js";
 import { idsPorNombre, sincronizarHerramientas } from "../src/herramientas/registro.js";
 import { clienteVapi, type Asistente } from "../src/vapi/cliente.js";
 
@@ -31,9 +38,18 @@ const CAMPOS_COPIADOS = [
 
 const args = process.argv.slice(2);
 const captura = args.includes("--captura");
+const propias = args.includes("--propias");
+if (captura && propias) throw new Error("O --captura o --propias, no las dos.");
 const url = args[args.indexOf("--url") + 1];
 if (!args.includes("--url") || !url?.startsWith("https://")) throw new Error("Falta la URL del túnel: --url https://…");
-const server = { url: `${url.replace(/\/+$/, "")}/api/vapi`, credentialId: variableObligatoria("VAPI_WEBHOOK_CREDENTIAL_ID"), timeoutSeconds: 20 };
+// El servidor, COMPLETO (PATCH reemplaza el objeto). 10 s de límite y un reintento al segundo si falla la
+// red o el servidor (nunca ante 400/401/403/404): las cuatro herramientas aguantan repetirse.
+const server = {
+  url: `${url.replace(/\/+$/, "")}/api/vapi`,
+  credentialId: variableObligatoria("VAPI_WEBHOOK_CREDENTIAL_ID"),
+  timeoutSeconds: 10,
+  backoffPlan: { type: "fixed", maxRetries: 1, baseDelaySeconds: 1, excludedStatusCodes: [400, 401, 403, 404] },
+};
 
 const vapi = clienteVapi();
 const diego = await vapi.leerAsistente(cargarFicha("dentalvis").assistantId);
@@ -41,7 +57,16 @@ const ficheroFicha = ruta("fichas", CARPETA, "ficha.json");
 const existente = existsSync(ficheroFicha) ? (JSON.parse(readFileSync(ficheroFicha, "utf8")) as { assistantId?: string }).assistantId : undefined;
 
 const cambios: Partial<Asistente> = { server };
-if (captura || !existente) {
+if (propias) {
+  const ids = idsPorNombre(await sincronizarHerramientas(vapi));
+  const c = compilarFicha(await leerFicha(cargarFicha(CARPETA).spreadsheetId), { bloques: leerBloques(), mensajes: leerMensajes() });
+  const model = structuredClone(diego.model!);
+  model.messages = model.messages!.map((m) => (m.role === "system" ? { ...m, content: c.prompt } : m));
+  model.toolIds = [ids.consultar_huecos!, ids.anotar!, ids.crear_cita!, ids.escalar_a_recepcion!, ids.endCall!];
+  const sinEnganchar = herramientasNombradas(c.prompt).filter((n) => !(n in ids));
+  if (sinEnganchar.length) throw new Error(`El prompt nombra ${sinEnganchar.join(", ")}, que no está entre las herramientas propias.`);
+  Object.assign(cambios, { name: NOMBRE, model, firstMessage: c.firstMessage, endCallMessage: c.endCallMessage, voicemailMessage: c.voicemailMessage });
+} else if (captura || !existente) {
   const ids = idsPorNombre(await sincronizarHerramientas(vapi));
   const model = structuredClone(diego.model!);
   const sistema = model.messages!.find((m) => m.role === "system")!;

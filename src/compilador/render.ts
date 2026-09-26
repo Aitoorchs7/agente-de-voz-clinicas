@@ -21,8 +21,6 @@ export interface Compilado {
   firstMessage: string;
   endCallMessage: string;
   voicemailMessage: string;
-  descripcionHerramientaHoja: string;
-  hojaId: string;
   contadores: Contador[];
   tramos: number;
   avisos: string[];
@@ -31,7 +29,6 @@ export interface Compilado {
 export interface ContenidoDelBot {
   bloques: Bloque[];
   mensajes: PlantillaMensaje[];
-  descripcionHerramientaHoja: string;
 }
 
 export function compilarFicha(ficha: FichaLeida, contenido: ContenidoDelBot): Compilado {
@@ -61,7 +58,6 @@ export function compilarFicha(ficha: FichaLeida, contenido: ContenidoDelBot): Co
     tratamientos: renderTratamientos(tratamientos.cargadas),
     faq: renderFaq(faq.cargadas),
     horario: renderHorario(ficha.horarios),
-    hoja_id: ficha.spreadsheetId,
     ahora: `{{"now" | date: "%Y-%m-%d %H:%M", "${cfg.zona_horaria}"}}`,
     dia_semana: `{{"now" | date: "%A", "${cfg.zona_horaria}"}}`,
   };
@@ -81,8 +77,6 @@ export function compilarFicha(ficha: FichaLeida, contenido: ContenidoDelBot): Co
     firstMessage: mensaje("firstMessage"),
     endCallMessage: mensaje("endCallMessage"),
     voicemailMessage: mensaje("voicemailMessage"),
-    descripcionHerramientaHoja: rellenar(contenido.descripcionHerramientaHoja, huecos, "la descripción de la herramienta de Sheets"),
-    hojaId: ficha.spreadsheetId,
     contadores: [config.contador, tratamientos.contador, faq.contador],
     tramos: ficha.horarios.length,
     avisos,

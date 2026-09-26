@@ -2,13 +2,13 @@
 // Dentalvis tal como queda en la hoja.
 
 import { describe, expect, it } from "vitest";
-import { leerBloques, leerDescripcionHerramientaHoja, leerMensajes } from "../src/compilador/bloques.js";
+import { leerBloques, leerMensajes } from "../src/compilador/bloques.js";
 import { compilarFicha, ErrorDeRender, rellenar } from "../src/compilador/render.js";
 import { ErrorDeFiltro } from "../src/compilador/filtro.js";
 import { PESTANAS } from "../src/hoja/esquema.js";
 import { fichaDentalvis, fichaDesdeMatrices, matricesDe } from "./ayudas.js";
 
-const contenido = () => ({ bloques: leerBloques(), mensajes: leerMensajes(), descripcionHerramientaHoja: leerDescripcionHerramientaHoja() });
+const contenido = () => ({ bloques: leerBloques(), mensajes: leerMensajes() });
 
 describe("Dentalvis compila con el contenido real", () => {
   const c = compilarFicha(fichaDentalvis("1IXd-hoja"), contenido());
@@ -23,7 +23,7 @@ describe("Dentalvis compila con el contenido real", () => {
   });
 
   it("lo confidencial no está en NINGUNO de los textos publicados", () => {
-    const todo = [c.prompt, c.firstMessage, c.endCallMessage, c.voicemailMessage, c.descripcionHerramientaHoja].join("\n");
+    const todo = [c.prompt, c.firstMessage, c.endCallMessage, c.voicemailMessage].join("\n");
     for (const secreto of ["140 €", "60 %", "15 %", "Sedación", "laboratorio nos la cobra", "mutua", "No comunicar"]) {
       expect(todo).not.toContain(secreto);
     }
@@ -38,15 +38,12 @@ describe("Dentalvis compila con el contenido real", () => {
   });
 
   it("los huecos de Vapi quedan INTACTOS para que los resuelva en cada llamada", () => {
-    // Entre comillas: si no hay número, Vapi deja el texto {{customer.number}} tal cual (visto en la
-    // llamada de Talk del 24-sep, que lo copió a la hoja como teléfono). Las comillas dejan ver si hay cifras.
-    expect(c.prompt).toContain("«{{customer.number}}»");
     expect(c.prompt).toContain('{{"now" | date: "%Y-%m-%d %H:%M", "Europe/Madrid"}}');
     expect(c.prompt).toContain('{{"now" | date: "%A", "Europe/Madrid"}}');
   });
 
   it("no queda ningún hueco del compilador sin rellenar", () => {
-    for (const hueco of ["clinica", "bot", "trato", "privacidad", "datos", "tratamientos", "faq", "horario", "hoja_id", "ahora", "dia_semana"]) {
+    for (const hueco of ["clinica", "bot", "trato", "privacidad", "datos", "tratamientos", "faq", "horario", "ahora", "dia_semana"]) {
       expect(c.prompt).not.toContain(`{{${hueco}}}`);
     }
   });
@@ -59,14 +56,16 @@ describe("Dentalvis compila con el contenido real", () => {
     expect(c.voicemailMessage).toContain("Ha llamado a Clínica Dentalvis.");
   });
 
-  it("el spreadsheetId lo pone el compilador: en el prompt y en la herramienta", () => {
-    expect(c.prompt).toContain("identificador de la hoja: 1IXd-hoja");
-    expect(c.descripcionHerramientaHoja).toContain("el spreadsheetId es EXACTAMENTE 1IXd-hoja y");
-    expect(c.hojaId).toBe("1IXd-hoja");
+  it("el prompt no lleva la hoja ni el número de la llamada: eso lo saben las herramientas", () => {
+    // Fase 3: la fila de cada llamada la escribe el servidor, y si hay número lo dice `anotar` en su
+    // respuesta. Con {{customer.number}} en el prompt, el bot ofreció «este mismo número» sin haberlo.
+    expect(c.prompt).not.toContain("1IXd-hoja");
+    expect(c.prompt).not.toContain("{{customer.number}}");
+    expect(c.prompt).not.toMatch(/google_sheets_tool|google_calendar/);
   });
 
   it("el orden de los bloques es el del frontmatter", () => {
-    const pos = ["ERES UN ASISTENTE VIRTUAL", "QUÉ DÍA Y QUÉ HORA ES", "CÓMO HABLAS", "NO INTERPRETES", "NO TE INVENTES NADA", "SI AL OTRO LADO", "CÓMO COGES UNA CITA", "CUÁNDO PASAS A UNA PERSONA", "ANTES DE COLGAR", "DATOS DE LA CLÍNICA"].map((t) => c.prompt.indexOf(t));
+    const pos = ["ERES UN ASISTENTE VIRTUAL", "QUÉ DÍA Y QUÉ HORA ES", "CÓMO HABLAS", "NO INTERPRETES", "NO TE INVENTES NADA", "SI AL OTRO LADO", "CÓMO COGES UNA CITA", "CUÁNDO PASAS A UNA PERSONA", "DATOS DE LA CLÍNICA"].map((t) => c.prompt.indexOf(t));
     expect(pos.every((p) => p >= 0)).toBe(true);
     expect([...pos].sort((a, b) => a - b)).toEqual(pos);
   });

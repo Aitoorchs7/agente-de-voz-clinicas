@@ -5,7 +5,7 @@ import { appendFileSync, closeSync, existsSync, mkdirSync, openSync, readFileSyn
 import { ruta } from "../entorno.js";
 import { leerFicha } from "../hoja/lector.js";
 import { clienteVapi, type ClienteVapi } from "../vapi/cliente.js";
-import { leerBloques, leerDescripcionHerramientaHoja, leerMensajes } from "./bloques.js";
+import { leerBloques, leerMensajes } from "./bloques.js";
 import { describirContador } from "./filtro.js";
 import { publicar, type ResultadoPublicacion } from "./publicar.js";
 import { compilarFicha, type Compilado } from "./render.js";
@@ -61,7 +61,6 @@ export async function cicloDeCompilacion(
     const compilado = compilarFicha(leida, {
       bloques: leerBloques(),
       mensajes: leerMensajes(),
-      descripcionHerramientaHoja: leerDescripcionHerramientaHoja(),
     });
     const lineas = [
       ...compilado.contadores.map(describirContador),

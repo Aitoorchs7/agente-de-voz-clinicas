@@ -24,9 +24,8 @@ nombre de la clínica escritos aquí obligan a la clínica a llamarte para cambi
 | `{{datos}}` | Compilador | Filas públicas de `Config` que no tienen hueco propio |
 | `{{tratamientos}}`, `{{faq}}` | Compilador | Solo filas con `público = sí` |
 | `{{horario}}` | Compilador | `Horarios`, día a día; un día sin tramos sale como «cerrado» |
-| `{{hoja_id}}` | Compilador | El `spreadsheetId` de la ficha (lo usa el `70`, provisional) |
 | `{{ahora}}`, `{{dia_semana}}` | Compilador → **Vapi** | Se convierten en `{{"now" \| date: …, "<zona de Config>"}}`, que Vapi resuelve en cada llamada |
-| `{{customer.number}}` y demás de Vapi | **Vapi** | Se dejan intactos |
+| `{{customer.number}}` y demás de Vapi | **Vapi** | Se dejan intactos. Ningún bloque los usa desde la Fase 3: si la llamada trae número lo dice `anotar` en su respuesta, en el momento en que hace falta |
 
 Un hueco que no sea de ninguno de los dos mundos **para la publicación**: no se deja en blanco.
 
@@ -36,10 +35,14 @@ Un hueco que no sea de ninguno de los dos mundos **para la publicación**: no se
 - `30 - Que no puede decir`: palabra por palabra de la V1 **salvo** los nombres de herramienta (cambian
   con la fase) y el dato de horario que traía escrito (se quitó el 24-sep: va por `{{horario}}`).
 
-## El provisional
+## Las herramientas
 
-`70 - Antes de colgar` existe mientras vivan las herramientas nativas de Vapi. Lo retira la Fase 3
-cuando el `end-of-call-report` escriba en `Llamadas`.
+Los bloques nombran las herramientas propias por su nombre exacto: `consultar_huecos`, `anotar`,
+`crear_cita` y `escalar_a_recepcion` (se definen en `src/herramientas/definiciones.ts`). El compilador no
+publica un prompt que nombre una herramienta que el asistente no tenga enganchada.
+
+El `70 - Antes de colgar` y el hueco `{{hoja_id}}` se retiraron en la Fase 3 (26-sep-2026): la fila de
+cada llamada en `Llamadas` la escribe el `end-of-call-report`, con el coste real, sin que el bot haga nada.
 
 ## Los mensajes fijos
 

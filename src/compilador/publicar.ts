@@ -6,9 +6,14 @@
 //   GET → copiar el `model` entero → cambiar solo el texto del mensaje de sistema → PATCH completo
 //   → GET otra vez y comparar campo a campo → si algo no cuadra, volver a dejarlo como estaba.
 // Un 200 OK no es una publicación correcta. La comprobación posterior sí.
+//
+// Desde la Fase 3 no hay herramienta nativa de Sheets que tocar (la fila de cada llamada la escribe el
+// `end-of-call-report`). A cambio, antes de publicar se comprueba que cada herramienta que nombra el
+// prompt está enganchada al asistente.
 
 import { isDeepStrictEqual } from "node:util";
-import type { Asistente, ClienteVapi, Herramienta } from "../vapi/cliente.js";
+import { HERRAMIENTAS } from "../herramientas/definiciones.js";
+import type { Asistente, ClienteVapi } from "../vapi/cliente.js";
 import type { Compilado } from "./render.js";
 
 export class ErrorDePublicacion extends Error {
@@ -25,7 +30,25 @@ export interface ResultadoPublicacion {
 const MENSAJES = ["firstMessage", "endCallMessage", "voicemailMessage"] as const;
 /** Campos que Vapi cambia solo en cada PATCH y que no cuentan como diferencia. */
 const CAMPOS_QUE_CAMBIA_VAPI = new Set(["updatedAt", "latestVersion"]);
-const TIPO_HOJA = "google.sheets.row.append";
+
+/**
+ * Los nombres de herramienta que un prompt puede nombrar: las propias (Fase 3) y las nativas que ha
+ * habido. Si el prompt nombra una que el asistente no tiene, el bot la llamaría y no pasaría nada: no se
+ * publica. Es lo que impide poner el prompt de las herramientas propias en un asistente con las nativas,
+ * o al revés.
+ */
+export const NOMBRES_DE_HERRAMIENTA: readonly string[] = [
+  ...HERRAMIENTAS.map((h) => h.name),
+  "google_calendar_check",
+  "google_calendar_agendamiento",
+  "google_sheets_tool",
+  "transferir_llamada",
+  "finalizar_llamada",
+];
+
+export function herramientasNombradas(prompt: string): string[] {
+  return NOMBRES_DE_HERRAMIENTA.filter((n) => new RegExp(`(^|[^\\w])${n}([^\\w]|$)`).test(prompt));
+}
 
 export async function publicar(
   vapi: ClienteVapi,
@@ -37,55 +60,50 @@ export async function publicar(
   const antes = await vapi.leerAsistente(assistantId);
   comprobarQueEstaSano(antes);
 
+  // --- Las herramientas que nombra el prompt tienen que estar enganchadas al asistente.
+  const tiene = new Set(
+    (await Promise.all((antes.model!.toolIds ?? []).map((id) => vapi.leerHerramienta(id)))).map((h) => h.function?.name ?? h.type),
+  );
+  const faltan = herramientasNombradas(c.prompt).filter((n) => !tiene.has(n));
+  if (faltan.length) {
+    throw new ErrorDePublicacion(
+      `El prompt nombra ${faltan.join(", ")} y el asistente ${assistantId} no ${faltan.length === 1 ? "la tiene enganchada" : "las tiene enganchadas"}. ` +
+        "No publico: el bot llamaría a una herramienta que no existe.",
+    );
+  }
+
   // --- Qué cambiaría en el asistente
   const cambios: string[] = [];
   const sistemaAntes = antes.model!.messages!.find((m) => m.role === "system")!;
   if (sistemaAntes.content !== c.prompt) cambios.push("prompt");
   for (const campo of MENSAJES) if (antes[campo] !== c[campo]) cambios.push(campo);
 
-  // --- Qué cambiaría en la herramienta nativa de Sheets
-  const hoja = await buscarHerramientaDeHoja(vapi, antes, avisos);
-  const hojaDeseada = hoja && {
-    metadata: { ...hoja.metadata, spreadsheetId: c.hojaId },
-    function: { ...hoja.function, description: c.descripcionHerramientaHoja },
-  };
-  const cambiaHoja =
-    !!hoja &&
-    !!hojaDeseada &&
-    (hoja.metadata?.spreadsheetId !== c.hojaId || hoja.function?.description !== c.descripcionHerramientaHoja);
-  if (cambiaHoja) cambios.push("herramienta de Sheets (spreadsheetId)");
-
   if (!cambios.length) return { estado: "sin-cambios", cambios, avisos };
   if (opciones.simular) return { estado: "simulado", cambios, avisos };
 
-  // --- Primero la herramienta: si falla, el asistente ni se toca.
-  if (cambiaHoja && hoja && hojaDeseada) await publicarHerramientaDeHoja(vapi, assistantId, hoja, hojaDeseada);
+  // --- El asistente, con el objeto `model` COMPLETO.
+  const model = structuredClone(antes.model!);
+  model.messages = model.messages!.map((m) => (m.role === "system" ? { ...m, content: c.prompt } : m));
+  await vapi.actualizarAsistente(assistantId, {
+    model,
+    firstMessage: c.firstMessage,
+    endCallMessage: c.endCallMessage,
+    voicemailMessage: c.voicemailMessage,
+  });
 
-  // --- Después el asistente, con el objeto `model` COMPLETO.
-  if (cambios.some((x) => x !== "herramienta de Sheets (spreadsheetId)")) {
-    const model = structuredClone(antes.model!);
-    model.messages = model.messages!.map((m) => (m.role === "system" ? { ...m, content: c.prompt } : m));
-    await vapi.actualizarAsistente(assistantId, {
-      model,
-      firstMessage: c.firstMessage,
-      endCallMessage: c.endCallMessage,
-      voicemailMessage: c.voicemailMessage,
-    });
-
-    const despues = await vapi.leerAsistente(assistantId);
-    const fallos = diferencias(antes, despues, {
-      model,
-      firstMessage: c.firstMessage,
-      endCallMessage: c.endCallMessage,
-      voicemailMessage: c.voicemailMessage,
-    });
-    if (fallos.length) {
-      const vuelta = await volverAtras(vapi, assistantId, antes);
-      throw new ErrorDePublicacion(
-        `El asistente no quedó como se mandó: ${fallos.join("; ")}. ` +
-          (vuelta ? "Se ha dejado como estaba antes." : "⚠ Y NO se ha podido dejar como estaba: revísalo a mano YA."),
-      );
-    }
+  const despues = await vapi.leerAsistente(assistantId);
+  const fallos = diferencias(antes, despues, {
+    model,
+    firstMessage: c.firstMessage,
+    endCallMessage: c.endCallMessage,
+    voicemailMessage: c.voicemailMessage,
+  });
+  if (fallos.length) {
+    const vuelta = await volverAtras(vapi, assistantId, antes);
+    throw new ErrorDePublicacion(
+      `El asistente no quedó como se mandó: ${fallos.join("; ")}. ` +
+        (vuelta ? "Se ha dejado como estaba antes." : "⚠ Y NO se ha podido dejar como estaba: revísalo a mano YA."),
+    );
   }
   return { estado: "publicado", cambios, avisos };
 }
@@ -137,41 +155,5 @@ async function volverAtras(vapi: ClienteVapi, assistantId: string, antes: Asiste
     return diferencias(antes, ahora, original).length === 0;
   } catch {
     return false;
-  }
-}
-
-async function buscarHerramientaDeHoja(vapi: ClienteVapi, a: Asistente, avisos: string[]): Promise<Herramienta | null> {
-  const herramientas = await Promise.all((a.model?.toolIds ?? []).map((id) => vapi.leerHerramienta(id)));
-  const deHoja = herramientas.filter((h) => h.type === TIPO_HOJA);
-  if (deHoja.length > 1) {
-    throw new ErrorDePublicacion(`El asistente tiene ${deHoja.length} herramientas de Sheets; no sé a cuál ponerle la hoja.`);
-  }
-  if (!deHoja.length) avisos.push("El asistente no tiene herramienta nativa de Sheets: no hay spreadsheetId que poner.");
-  return deHoja[0] ?? null;
-}
-
-async function publicarHerramientaDeHoja(
-  vapi: ClienteVapi,
-  assistantId: string,
-  antes: Herramienta,
-  deseada: Pick<Herramienta, "metadata" | "function">,
-): Promise<void> {
-  // La misma herramienta en dos asistentes significa dos clínicas escribiendo en la misma hoja.
-  const otros = (await vapi.listarAsistentes()).filter((a) => a.id !== assistantId && a.model?.toolIds?.includes(antes.id));
-  if (otros.length) {
-    throw new ErrorDePublicacion(
-      `La herramienta de Sheets ${antes.id} la usa también ${otros.map((a) => a.name ?? a.id).join(", ")}. ` +
-        `Cada clínica necesita la suya; no la cambio.`,
-    );
-  }
-  await vapi.actualizarHerramienta(antes.id, deseada);
-  const despues = await vapi.leerHerramienta(antes.id);
-  const bien =
-    isDeepStrictEqual(despues.metadata, deseada.metadata) &&
-    despues.function?.description === deseada.function?.description &&
-    despues.function?.name === antes.function?.name;
-  if (!bien) {
-    await vapi.actualizarHerramienta(antes.id, { metadata: antes.metadata, function: antes.function }).catch(() => undefined);
-    throw new ErrorDePublicacion("La herramienta de Sheets no quedó como se mandó; se ha intentado dejar como estaba.");
   }
 }

@@ -108,8 +108,3 @@ export function leerMensajes(carpeta = ruta("contenido", "mensajes")): Plantilla
   return mensajes;
 }
 
-/** Descripción de la herramienta nativa de Sheets, con el hueco {{hoja_id}}. */
-export function leerDescripcionHerramientaHoja(fichero = ruta("contenido", "herramientas", "google_sheets_tool.md")): string {
-  const { cuerpo } = separarFrontmatter("google_sheets_tool.md", readFileSync(fichero, "utf8"));
-  return cuerpo;
-}
