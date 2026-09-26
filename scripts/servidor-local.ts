@@ -55,8 +55,13 @@ const servidor = createServer(async (peticion, respuesta) => {
     respuesta.writeHead(200, { "Content-Type": "text/plain; charset=utf-8" }).end("ok");
     return;
   }
-  if (peticion.method !== "POST" || !peticion.url?.startsWith("/api/vapi")) {
+  if (!peticion.url?.startsWith("/api/vapi")) {
     respuesta.writeHead(404).end();
+    return;
+  }
+  if (peticion.method !== "POST") {
+    // Como en Vercel, donde api/vapi.ts solo exporta POST.
+    respuesta.writeHead(405).end();
     return;
   }
   const crudo = await leerCuerpo(peticion);

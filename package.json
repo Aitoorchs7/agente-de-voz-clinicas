@@ -21,7 +21,8 @@
     "tunel": "tsx scripts/tunel.ts",
     "receptor": "tsx scripts/tunel.ts --con-servidor",
     "humo": "tsx scripts/humo.ts",
-    "limpiar-pruebas": "tsx scripts/limpiar-pruebas.ts"
+    "limpiar-pruebas": "tsx scripts/limpiar-pruebas.ts",
+    "cambiar-diego": "tsx scripts/cambiar-diego.ts"
   },
   "devDependencies": {
     "@types/node": "^26.6.2",

@@ -1,0 +1,10 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "regions": ["dub1"],
+  "functions": {
+    "api/vapi.ts": {
+      "maxDuration": 30,
+      "includeFiles": "fichas/**"
+    }
+  }
+}

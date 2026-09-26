@@ -21,9 +21,9 @@ import { cargarFicha } from "../src/compilador/ciclo.js";
 import { herramientasNombradas } from "../src/compilador/publicar.js";
 import { compilarFicha } from "../src/compilador/render.js";
 import { leerFicha } from "../src/hoja/lector.js";
-import { FRASE_PARA_COLGAR } from "../src/herramientas/definiciones.js";
 import { idsPorNombre, sincronizarHerramientas } from "../src/herramientas/registro.js";
 import { clienteVapi, type Asistente } from "../src/vapi/cliente.js";
+import { cambiosParaPropias, configuracionDelServidor } from "../src/vapi/servidor.js";
 
 const NOMBRE = "PRUEBAS F3 · no usar en demos";
 const CARPETA = "dentalvis-pruebas";
@@ -43,14 +43,7 @@ const propias = args.includes("--propias");
 if (captura && propias) throw new Error("O --captura o --propias, no las dos.");
 const url = args[args.indexOf("--url") + 1];
 if (!args.includes("--url") || !url?.startsWith("https://")) throw new Error("Falta la URL del túnel: --url https://…");
-// El servidor, COMPLETO (PATCH reemplaza el objeto). 10 s de límite y un reintento al segundo si falla la
-// red o el servidor (nunca ante 400/401/403/404): las cuatro herramientas aguantan repetirse.
-const server = {
-  url: `${url.replace(/\/+$/, "")}/api/vapi`,
-  credentialId: variableObligatoria("VAPI_WEBHOOK_CREDENTIAL_ID"),
-  timeoutSeconds: 10,
-  backoffPlan: { type: "fixed", maxRetries: 1, baseDelaySeconds: 1, excludedStatusCodes: [400, 401, 403, 404] },
-};
+const server = configuracionDelServidor(url, variableObligatoria("VAPI_WEBHOOK_CREDENTIAL_ID"));
 
 const vapi = clienteVapi();
 const diego = await vapi.leerAsistente(cargarFicha("dentalvis").assistantId);
@@ -61,15 +54,10 @@ const cambios: Partial<Asistente> = { server };
 if (propias) {
   const ids = idsPorNombre(await sincronizarHerramientas(vapi));
   const c = compilarFicha(await leerFicha(cargarFicha(CARPETA).spreadsheetId), { bloques: leerBloques(), mensajes: leerMensajes() });
-  const model = structuredClone(diego.model!);
-  model.messages = model.messages!.map((m) => (m.role === "system" ? { ...m, content: c.prompt } : m));
-  model.toolIds = [ids.consultar_huecos!, ids.anotar!, ids.crear_cita!, ids.escalar_a_recepcion!, ids.endCall!];
   const sinEnganchar = herramientasNombradas(c.prompt).filter((n) => !(n in ids));
   if (sinEnganchar.length) throw new Error(`El prompt nombra ${sinEnganchar.join(", ")}, que no está entre las herramientas propias.`);
-  Object.assign(cambios, {
-    name: NOMBRE, model, firstMessage: c.firstMessage, endCallMessage: c.endCallMessage, voicemailMessage: c.voicemailMessage,
-    endCallPhrases: [FRASE_PARA_COLGAR],
-  });
+  // El `model` de Diego (proveedor, modelo, temperatura…) con el prompt nuevo y solo las propias.
+  Object.assign(cambios, { name: NOMBRE, ...cambiosParaPropias(diego, ids, c, server) });
 } else if (captura || !existente) {
   const ids = idsPorNombre(await sincronizarHerramientas(vapi));
   const model = structuredClone(diego.model!);
