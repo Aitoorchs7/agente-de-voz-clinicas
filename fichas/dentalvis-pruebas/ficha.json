@@ -2,5 +2,10 @@
   "_nota": "Asistente de PRUEBAS de la Fase 3: no usar en demos. Misma hoja que Dentalvis. Lo crea y lo cambia scripts/asistente-pruebas.ts.",
   "clinica": "Clínica Dentalvis (pruebas)",
   "spreadsheetId": "1IXdKW0j56YfNb8iKQknKiWZQYLpAsYNrpoeJnaMmhLk",
-  "assistantId": "0854f732-b5f0-4224-9fd6-2edc60829c81"
+  "assistantId": "0854f732-b5f0-4224-9fd6-2edc60829c81",
+  "calendarios": {
+    "Gabinete 1": "2f41380efec6d97e4259db343777e10d1aa063ebe3a87ec6b555be5e655f1664@group.calendar.google.com",
+    "Gabinete 2": "68f904c8a9a1cae506d275e65ff09a1638be3198a1b4a0b5af125b78a7f50ba4@group.calendar.google.com",
+    "Gabinete 3": "79e292f535cf9b4bc73e12264c4cef37147f2c91e98dde20cea557a2577e2555@group.calendar.google.com"
+  }
 }

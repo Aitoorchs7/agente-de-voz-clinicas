@@ -63,6 +63,7 @@ if (!existente) {
         clinica: "Clínica Dentalvis (pruebas)",
         spreadsheetId: cargarFicha("dentalvis").spreadsheetId,
         assistantId: creado.id,
+        calendarios: cargarFicha("dentalvis").calendarios,
       },
       null,
       2,

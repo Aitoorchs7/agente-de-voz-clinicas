@@ -1,6 +1,11 @@
 {
-  "_nota": "Fila de identidad de la clínica (PLAN.md §4): su hoja y su asistente. Nada más. Clínica INVENTADA, datos ficticios.",
+  "_nota": "Fila de identidad de la clínica (PLAN.md §4): su hoja, su asistente y sus calendarios de Google, uno por gabinete (la clave es el nombre del gabinete de la columna gabinete de Tratamientos). Nada más. Clínica INVENTADA, datos ficticios.",
   "clinica": "Clínica Dentalvis",
   "spreadsheetId": "1IXdKW0j56YfNb8iKQknKiWZQYLpAsYNrpoeJnaMmhLk",
-  "assistantId": "2de1097d-fc5e-4684-b2ed-2c5399ef9368"
+  "assistantId": "2de1097d-fc5e-4684-b2ed-2c5399ef9368",
+  "calendarios": {
+    "Gabinete 1": "2f41380efec6d97e4259db343777e10d1aa063ebe3a87ec6b555be5e655f1664@group.calendar.google.com",
+    "Gabinete 2": "68f904c8a9a1cae506d275e65ff09a1638be3198a1b4a0b5af125b78a7f50ba4@group.calendar.google.com",
+    "Gabinete 3": "79e292f535cf9b4bc73e12264c4cef37147f2c91e98dde20cea557a2577e2555@group.calendar.google.com"
+  }
 }

@@ -9,7 +9,18 @@
 
 ## ⏳ Lo que necesito de ti ahora
 
-### 1. La llamada 1 — captura del contrato + teléfono + migración (lista desde el 25-sep, 22:48)
+### 1. La llamada 1, OTRA VEZ — captura del contrato + teléfono + migración (lista desde el 26-sep, 13:47)
+
+> **Qué pasó en el primer intento (26-sep, 13:39, llamada `01a0dd82-…`).** No fue culpa tuya ni del bot: el
+> túnel y el receptor vivían en mi sesión, la sesión se cerró durante la noche y se los llevó. En el
+> segundo 34 el bot llamó a `anotar` con la fecha (`{"campo":"fecha","valor":"2026-09-29"}`: el «martes»
+> lo convirtió bien él solo), Vapi no encontró la dirección (`getaddrinfo ENOTFOUND …trycloudflare.com`),
+> el bot dijo «miro la agenda para el martes 29» y se quedó callado hasta que Vapi colgó por silencio
+> (`silence-timed-out`, a los 73 s). No llegó nada a mi receptor.
+>
+> **Arreglado:** ahora hay un solo comando, `npm run receptor`, que levanta el servidor y el túnel y
+> vigila los dos. Lo tengo corriendo; si alguna vez vas a llamar sin que yo esté, lánzalo tú en una
+> terminal y déjala abierta. Probado desde fuera con la credencial, como llamaría Vapi.
 
 - **A qué asistente:** **`PRUEBAS F3 · no usar en demos`** (panel de Vapi → Assistants → ese → **Talk**).
   **No a Diego.** Es una copia exacta de Diego (mismo prompt `v16`, voz, modelo y herramientas nativas)
@@ -24,22 +35,28 @@
      `Llamadas_fase1`, y es una de las tres cosas que compruebo.
 - **Qué saco de esta llamada:** (a) que el bot pide el teléfono; (b) los dos POST reales, `tool-calls` y
   `end-of-call-report`, que son el contrato; (c) la fila en `Llamadas_fase1`, con el teléfono en cifras.
-- **El receptor y el túnel están corriendo ahora en mi sesión**, y el túnel va **vigilado**: el primero
-  murió solo a los 40 minutos (Cloudflare da de baja los túneles rápidos sin avisar), así que si cae se
-  levanta otro y el asistente de pruebas se reapunta solo. Si aun así el bot se queda callado tras dar
-  el nombre, o dice que no puede apuntar, dímelo: una llamada en curso no sobrevive a un cambio de túnel.
+- **El receptor y el túnel están corriendo** (`npm run receptor`), vigilados: si el túnel cae (el del
+  25-sep murió solo a los 40 minutos), se levanta otro y el asistente de pruebas se reapunta solo. Si aun
+  así el bot se queda callado o dice que no puede apuntar, dímelo: una llamada en curso no sobrevive a un
+  cambio de túnel.
 - La cita que cree es de prueba (irá al calendario «Gabinete 1» por la herramienta nativa). La borraré
   al comprobarla, salvo que me digas que la deje.
 
-### 2. Los IDs de «Gabinete 2» y «Gabinete 3»
+### 2. «Gabinete 2»: la cuenta de servicio solo puede VER, no escribir
 
-La cuenta de servicio **no ve** los calendarios que se comparten con ella hasta que se le dan sus IDs:
-Google no los añade solos a su lista. Solo ve el que ya había (que ahora se llama «Gabinete 1 », con un
-espacio al final; da igual, el nombre no se usa).
+Los IDs ya están dados de alta y apuntados en `fichas/dentalvis/ficha.json` (el segundo que me pasaste
+como «Gabinete 1» es, según Google, **«Gabinete 3 »**: lo he comprobado por su nombre). Lo que ve ahora
+la cuenta de servicio:
 
-Para cada uno: Google Calendar → ⚙ Configuración → el calendario → **Integrar el calendario** → **ID
-del calendario** (algo como `…@group.calendar.google.com`). Pégamelos en la conversación: no son
-secretos, van a `fichas/dentalvis/ficha.json`.
+| Calendario | Permiso | ¿Vale? |
+| --- | --- | --- |
+| Gabinete 1 | `writer` | ✅ |
+| Gabinete 2 | `reader` | ❌ **solo lectura**: no podría crear citas de ortodoncia (`ORT`) |
+| Gabinete 3 | `writer` | ✅ |
+
+**Qué hacer:** Google Calendar → ⚙ Configuración → «Gabinete 2» → **Compartir con determinadas personas**
+→ la cuenta de servicio → cambiar el permiso a **«Hacer cambios en eventos»**. Avísame y lo compruebo.
+No corre prisa: lo necesito cuando escriba en calendarios, no para la llamada 1.
 
 ---
 
@@ -59,6 +76,16 @@ secretos, van a `fichas/dentalvis/ficha.json`.
 | Asistente de pruebas `0854f732-…` | Creado como copia de Diego; comparado campo a campo |
 | Hora de la clínica, fechas y horas en palabras, validación de teléfono y nombre (de la V1) | Pruebas de la franja 23:00–01:00 minuto a minuto y de los cambios de hora del 29-mar y 25-oct-2026 |
 | **Bloqueo temporal** en Redis (scripts Lua atómicos), ficha de la llamada y candado de la hoja | La misma batería en memoria y **contra Upstash de verdad**: 18 de 18, incluidas **diez llamadas a la vez por la misma hora → se la lleva una** |
+| Calendarios por gabinete (26-sep) | Los tres dados de alta en la lista de la cuenta de servicio y apuntados en la ficha (`calendarios`, clave = nombre del gabinete de Tratamientos). Gabinete 2 solo en lectura: ver arriba |
+| Receptor de desarrollo en un solo comando (26-sep) | `npm run receptor`: servidor + túnel vigilados. Prueba de humo desde fuera con la credencial: `tool-calls` → «Anotado.» |
+
+**Lo que enseñó el primer intento de la llamada 1** (y que va a los bloques y a la configuración del
+servidor, no solo a las pruebas): **si nuestro servidor no contesta, el bot se queda mudo.** Vapi le
+pasa al modelo, como resultado de la herramienta, un texto en inglés («Your server rejected `tool-calls`
+webhook…»); el bot dijo «miro la agenda» y no volvió a hablar. En Vercel esto será raro, pero el bot
+tiene que saber salir: los bloques dirán qué hacer cuando una herramienta falla (disculparse, tomar nota
+por `escalar_a_recepcion` si se puede, y si no, dar el teléfono de recepción), y el servidor llevará un
+`backoffPlan` de Vapi con un reintento para los fallos de red.
 
 **Dos cosas de Vapi que conviene saber**, vistas en su especificación OpenAPI (`api.vapi.ai/api-json`):
 

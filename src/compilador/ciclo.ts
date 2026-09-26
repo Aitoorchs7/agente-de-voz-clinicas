@@ -10,11 +10,16 @@ import { describirContador } from "./filtro.js";
 import { publicar, type ResultadoPublicacion } from "./publicar.js";
 import { compilarFicha, type Compilado } from "./render.js";
 
-/** La «fila de identidad» de una clínica (PLAN.md §4): su hoja y su asistente. Nada más. */
+/**
+ * La «fila de identidad» de una clínica (PLAN.md §4): su hoja, su asistente y sus calendarios de Google,
+ * uno por gabinete. La clave de `calendarios` es el nombre del gabinete tal como va en la columna
+ * `gabinete` de Tratamientos; el valor, el ID del calendario.
+ */
 export interface Ficha {
   clinica: string;
   spreadsheetId: string;
   assistantId: string;
+  calendarios: Record<string, string>;
 }
 
 export function cargarFicha(clinica: string): Ficha {
@@ -22,7 +27,12 @@ export function cargarFicha(clinica: string): Ficha {
   if (!existsSync(fichero)) throw new Error(`No existe la ficha de «${clinica}» (${fichero})`);
   const f = JSON.parse(readFileSync(fichero, "utf8")) as Partial<Ficha>;
   if (!f.spreadsheetId || !f.assistantId) throw new Error(`La ficha de «${clinica}» tiene que tener spreadsheetId y assistantId`);
-  return { clinica, spreadsheetId: f.spreadsheetId, assistantId: f.assistantId };
+  const calendarios: Record<string, string> = {};
+  for (const [gabinete, id] of Object.entries(f.calendarios ?? {})) {
+    if (typeof id !== "string" || !id.includes("@")) throw new Error(`La ficha de «${clinica}»: el calendario de «${gabinete}» no es un ID de calendario`);
+    calendarios[gabinete.trim()] = id.trim();
+  }
+  return { clinica, spreadsheetId: f.spreadsheetId, assistantId: f.assistantId, calendarios };
 }
 
 export interface ResultadoCiclo {

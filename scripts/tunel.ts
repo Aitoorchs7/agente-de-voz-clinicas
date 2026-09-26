@@ -3,7 +3,12 @@
 // existir. Este script arranca cloudflared, apunta el asistente de PRUEBAS a la dirección nueva y, si el
 // túnel se cae o deja de contestar, lo vuelve a levantar y a apuntar. Diego no se toca nunca.
 //
-//   npm run tunel          (con el servidor local ya escuchando en el 8787: npm run servidor -- --captura)
+//   npm run receptor                          → servidor local de captura + túnel, los dos vigilados
+//   npm run tunel                             → solo el túnel (el servidor ya escuchando en el 8787)
+//
+// Todo vive lo que viva este proceso. El 26-sep una llamada de prueba encontró el túnel muerto porque
+// la sesión que lo había lanzado ya no existía: si se va a llamar sin nadie delante, se lanza
+// `npm run receptor` en una terminal propia y se deja abierta.
 //
 // Solo es para desarrollo, mientras no hay Vercel (el plan Pro se contrata al final de la Fase 3).
 
@@ -16,18 +21,38 @@ const BINARIO =
   variable("CLOUDFLARED") ??
   ["C:\\Program Files (x86)\\cloudflared\\cloudflared.exe", "C:\\Program Files\\cloudflared\\cloudflared.exe"].find(existsSync) ??
   "cloudflared";
+const conServidor = process.argv.includes("--con-servidor");
 
 let proceso: ChildProcess | null = null;
+let servidor: ChildProcess | null = null;
 let direccion: string | null = null;
 let fallosSalud = 0;
+let parando = false;
 const hora = () => new Date().toLocaleTimeString("es-ES");
+
+/** Un script del proyecto con el mismo Node y tsx cargado: sin shell, sin nietos que queden sueltos. */
+function script(fichero: string, argumentos: string[]): ChildProcess {
+  return spawn(process.execPath, ["--import", "tsx", fichero, ...argumentos], { stdio: ["ignore", "pipe", "pipe"] });
+}
+
+function arrancarServidor(): void {
+  servidor = script("scripts/servidor-local.ts", ["--captura"]);
+  const reenviar = (d: Buffer) => process.stdout.write(d.toString().replace(/^(?=.)/gm, "  [servidor] "));
+  servidor.stdout!.on("data", reenviar);
+  servidor.stderr!.on("data", reenviar);
+  servidor.on("exit", (codigo) => {
+    if (parando) return;
+    console.log(`${hora()} · ⚠ el servidor local ha terminado (código ${codigo}): se vuelve a arrancar`);
+    setTimeout(arrancarServidor, 2_000);
+  });
+}
 
 function apuntarAsistente(url: string): Promise<boolean> {
   return new Promise((resolver) => {
-    const p = spawn("npx", ["tsx", "scripts/asistente-pruebas.ts", "--url", url], { shell: true, stdio: ["ignore", "pipe", "pipe"] });
+    const p = script("scripts/asistente-pruebas.ts", ["--url", url]);
     let salida = "";
-    p.stdout.on("data", (d) => (salida += d));
-    p.stderr.on("data", (d) => (salida += d));
+    p.stdout!.on("data", (d) => (salida += d));
+    p.stderr!.on("data", (d) => (salida += d));
     p.on("close", (codigo) => {
       console.log(`${hora()} · asistente de pruebas → ${url}: ${codigo === 0 ? "apuntado y comprobado" : "⚠ FALLÓ"}`);
       if (codigo !== 0) console.log(salida.slice(-600));
@@ -53,7 +78,7 @@ function arrancar(): void {
     if (buffer.length > 20_000) buffer = buffer.slice(-5_000);
   });
   proceso.on("exit", (codigo) => {
-    if (proceso) reiniciar(`cloudflared ha terminado (código ${codigo})`);
+    if (proceso && !parando) reiniciar(`cloudflared ha terminado (código ${codigo})`);
   });
 }
 
@@ -73,9 +98,15 @@ setInterval(async () => {
   if (fallosSalud >= 2) reiniciar("el túnel no contesta");
 }, 60_000);
 
-process.on("SIGINT", () => {
+function parar(): void {
+  parando = true;
   proceso?.kill();
+  servidor?.kill();
   process.exit(0);
-});
-console.log(`Túnel vigilado hacia http://localhost:${PUERTO} (${BINARIO}). Ctrl+C para parar.`);
+}
+process.on("SIGINT", parar);
+process.on("SIGTERM", parar);
+
+console.log(`Túnel vigilado hacia http://localhost:${PUERTO} (${BINARIO})${conServidor ? ", con el servidor de captura" : ""}. Ctrl+C para parar.`);
+if (conServidor) arrancarServidor();
 arrancar();
