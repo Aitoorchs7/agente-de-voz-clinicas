@@ -75,13 +75,12 @@ export interface FilaCruda {
 }
 
 /**
- * Convierte la matriz de valores de una pestaña en filas con nombre de columna. Pura, sin red: es la
- * parte que se prueba con notas sueltas, columnas movidas y cabeceras duplicadas.
+ * Dónde está cada columna conocida, por su cabecera (clave: la cabecera normalizada; valor: su índice,
+ * 0 = A). La usan el lector y el escritor: una columna se encuentra igual al leer que al escribir.
  */
-export function interpretarTabla(pestana: Pestana, valores: string[][]): FilaCruda[] {
-  const cabeceras = (valores[0] ?? []).map((c) => normalizar(String(c ?? "")));
+export function posicionesDeColumnas(pestana: Pestana, primeraFila: readonly unknown[]): Map<string, number> {
+  const cabeceras = primeraFila.map((c) => normalizar(String(c ?? "")));
   const conocidas = new Map(pestana.columnas.map((c) => [normalizar(c), c]));
-
   const posicion = new Map<string, number>();
   cabeceras.forEach((c, i) => {
     if (!conocidas.has(c)) return;
@@ -92,6 +91,15 @@ export function interpretarTabla(pestana: Pestana, valores: string[][]): FilaCru
     }
     posicion.set(c, i);
   });
+  return posicion;
+}
+
+/**
+ * Convierte la matriz de valores de una pestaña en filas con nombre de columna. Pura, sin red: es la
+ * parte que se prueba con notas sueltas, columnas movidas y cabeceras duplicadas.
+ */
+export function interpretarTabla(pestana: Pestana, valores: string[][]): FilaCruda[] {
+  const posicion = posicionesDeColumnas(pestana, valores[0] ?? []);
 
   const faltan = pestana.obligatorias.filter((c) => !posicion.has(normalizar(c)));
   if (faltan.length) {

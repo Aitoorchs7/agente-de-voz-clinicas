@@ -16,8 +16,14 @@ export type DefinicionFuncion = {
   };
 };
 
-export const CAMPOS_ANOTAR = ["tratamiento", "fecha", "hora", "nombre", "apellidos", "telefono", "quien_llama"] as const;
+// `anotar` recibe VARIOS datos a la vez (26-sep-2026, tras la llamada 1): cada herramienta es un turno
+// del modelo con su «un segundo», y cuatro seguidas fueron trece segundos de espera. El tratamiento y el
+// día no pasan por aquí: los apunta `consultar_huecos`, que los necesita igualmente.
+export const CAMPOS_ANOTAR = ["nombre", "apellidos", "telefono", "quien_llama", "hora"] as const;
 export type CampoAnotar = (typeof CAMPOS_ANOTAR)[number];
+
+/** Lo que el modelo escribe en `telefono` cuando el paciente quiere que le llamen al número desde el que llama. */
+export const TELEFONO_DE_LA_LLAMADA = "el de esta llamada";
 
 export const MOTIVOS_ESCALADO = ["sin resolver", "urgencia", "anular o cambiar cita", "queja", "hablar con una persona"] as const;
 export type MotivoEscalado = (typeof MOTIVOS_ESCALADO)[number];
@@ -29,11 +35,12 @@ export const HERRAMIENTAS: readonly DefinicionFuncion[] = [
       "Mira en la agenda qué horas hay libres para un tratamiento un día concreto, teniendo en cuenta lo que dura, " +
       "su gabinete y el horario de la clínica, y las reserva unos minutos para esta llamada. Úsala siempre antes de " +
       "ofrecer una hora, y también cuando el paciente pida una hora concreta: nunca la descartes tú. Te devuelve como " +
-      "mucho dos horas para ofrecer, o te dice si ese día o a esa hora la clínica está cerrada.",
+      "mucho dos horas para ofrecer, o te dice si ese día o a esa hora la clínica está cerrada. Apunta ella misma el " +
+      "tratamiento y el día: no hace falta anotarlos aparte. Si el paciente cambia de día o de tratamiento, vuelve a llamarla.",
     parameters: {
       type: "object",
       properties: {
-        tratamiento: { type: "string", description: "El tratamiento, como lo hayas anotado o como lo ha dicho el paciente." },
+        tratamiento: { type: "string", description: "El tratamiento, como lo ha dicho el paciente." },
         fecha: { type: "string", description: "El día, en formato AAAA-MM-DD." },
         franja: { type: "string", enum: ["mañana", "tarde", "cualquiera"], description: "Si el paciente prefiere mañana o tarde." },
         hora: { type: "string", description: "Solo si el paciente ha pedido una hora concreta: HH:MM, en 24 horas." },
@@ -44,20 +51,26 @@ export const HERRAMIENTAS: readonly DefinicionFuncion[] = [
   {
     name: "anotar",
     description:
-      "Apunta en la ficha de esta llamada UN dato que el paciente acaba de decir, y comprueba que tiene sentido. " +
-      "Llámala cada vez que te den uno —el tratamiento, el día, la hora que elige, el nombre, los apellidos, el " +
-      "teléfono, o el nombre de quien llama si la cita es para otra persona— y solo con ese dato. Si te devuelve un " +
-      "problema, pídeselo otra vez al paciente explicándole qué pasa; no lo corrijas ni lo completes tú.",
+      "Apunta en la ficha de esta llamada los datos que el paciente acaba de decir y comprueba que tienen sentido. " +
+      "Llámala en cuanto te los diga, con todo lo que haya dicho en esa frase: si dice nombre y apellidos, van los dos " +
+      "en la misma llamada. El tratamiento y el día no van aquí: los apunta consultar_huecos. Si te devuelve un " +
+      "problema, pídeselo otra vez al paciente explicándole qué pasa; no lo corrijas ni lo completes tú. Y haz lo que " +
+      "te diga la respuesta sobre el paso siguiente.",
     parameters: {
       type: "object",
       properties: {
-        campo: { type: "string", enum: CAMPOS_ANOTAR, description: "Qué dato es." },
-        valor: {
+        nombre: { type: "string", description: "El nombre de pila de la persona que va a la cita." },
+        apellidos: { type: "string", description: "Sus apellidos." },
+        telefono: {
           type: "string",
-          description: "Lo que ha dicho el paciente. La fecha como AAAA-MM-DD, la hora como HH:MM y el teléfono en cifras.",
+          description:
+            "El teléfono de contacto en cifras, tal como lo ha dicho. Si el paciente quiere que le llamen al número desde " +
+            `el que llama, escribe exactamente «${TELEFONO_DE_LA_LLAMADA}».`,
         },
+        quien_llama: { type: "string", description: "Solo si la cita es para otra persona: el nombre de quien llama." },
+        hora: { type: "string", description: "La hora que elige el paciente entre las que le has ofrecido: HH:MM, en 24 horas." },
       },
-      required: ["campo", "valor"],
+      required: [],
     },
   },
   {
