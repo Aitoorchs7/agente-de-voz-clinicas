@@ -19,7 +19,9 @@
     "fijar-contrato": "tsx scripts/fijar-contrato.ts",
     "test:integracion": "vitest run --config vitest.integracion.config.ts",
     "tunel": "tsx scripts/tunel.ts",
-    "receptor": "tsx scripts/tunel.ts --con-servidor"
+    "receptor": "tsx scripts/tunel.ts --con-servidor",
+    "humo": "tsx scripts/humo.ts",
+    "limpiar-pruebas": "tsx scripts/limpiar-pruebas.ts"
   },
   "devDependencies": {
     "@types/node": "^26.6.2",

@@ -12,7 +12,8 @@
 //   no se reinterpreta y un texto que empiece por «=» no se convierte en una fórmula.
 // - Google NO pasa la validación de datos de la hoja cuando se escribe por API: la validación es de quien
 //   llama (las herramientas validan antes de llegar aquí).
-// - Después de escribir, se relee la fila y se compara. Si no ha quedado igual, es un error, no un aviso.
+// - Después de escribir se compara lo que Google dice que ha quedado guardado (lo devuelve en la misma
+//   respuesta). Si no ha quedado igual, es un error, no un aviso.
 // - `igual`: si ya hay una fila con esos mismos valores en esas columnas (el id de la llamada, el id del
 //   evento), no se escribe otra: Vapi puede repetir un aviso.
 
@@ -126,21 +127,26 @@ export function escritorDeHoja(
         const linea: (Celda | null)[] = Array.from({ length: ultima + 1 }, () => null);
         for (const [columna, v] of Object.entries(valores)) linea[posicion.get(normalizar(columna))!] = v;
 
+        // Google devuelve en la misma respuesta lo que ha quedado guardado (`includeValuesInResponse`): es
+        // la relectura, sin otro viaje (cada uno son 200–700 ms con el paciente esperando).
         const destino = encodeURIComponent(`'${pestana.nombre}'!A${numero}:${letra(ultima)}${numero}`);
         const escribir = () =>
-          pedir("PUT", `${base}/values/${destino}?valueInputOption=RAW`, `escribir en ${pestana.nombre}`, { majorDimension: "ROWS", values: [linea] });
+          pedir<{ updatedData?: { values?: unknown[][] } }>(
+            "PUT",
+            `${base}/values/${destino}?valueInputOption=RAW&includeValuesInResponse=true&responseValueRenderOption=UNFORMATTED_VALUE`,
+            `escribir en ${pestana.nombre}`,
+            { majorDimension: "ROWS", values: [linea] },
+          );
+        let escrito;
         try {
-          await escribir();
+          escrito = await escribir();
         } catch (e) {
           if (!(e instanceof ErrorDeHoja) || !/exceeds grid limits/i.test(e.message)) throw e;
           await crecer(pestana, numero);
-          await escribir();
+          escrito = await escribir();
         }
 
-        const releido = await pedir<{ values?: unknown[][] }>(
-          "GET", `${base}/values/${destino}?valueRenderOption=UNFORMATTED_VALUE&majorDimension=ROWS`, `comprobar lo escrito en ${pestana.nombre}`,
-        );
-        const quedo = releido.values?.[0] ?? [];
+        const quedo = escrito.updatedData?.values?.[0] ?? [];
         const distintas = linea.flatMap((v, i) => (v === null || String(quedo[i] ?? "") === String(v) ? [] : [letra(i)]));
         if (distintas.length) {
           throw new ErrorDeHoja(`La fila ${numero} de ${pestana.nombre} no ha quedado como se escribió (columnas ${distintas.join(", ")}).`);

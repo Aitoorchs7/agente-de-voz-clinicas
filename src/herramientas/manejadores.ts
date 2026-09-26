@@ -331,10 +331,15 @@ export async function crearCita(ctx: Contexto, args: Argumentos): Promise<string
     if (falta.length) return `Todavía no puedo crearla: falta ${falta.join(" y ")}. Pídeselo, anótalo con anotar y vuelve a llamar a crear_cita.`;
 
     const id = idDeEvento(llamada.id, o.calendario, o.inicio);
-    const yaCreado = (await dep.agenda.deLaLlamada(o.calendario, llamada.id)).includes(id);
-    if (!yaCreado) {
+    // Las tres comprobaciones no dependen entre sí: a la vez, que el paciente está esperando.
+    const [deLaLlamada, esMio, ocupado] = await Promise.all([
+      dep.agenda.deLaLlamada(o.calendario, llamada.id),
+      dep.bloqueos.esMio(llamada.id, intervalo(o)),
+      dep.agenda.ocupado(o.calendario, o.inicio, o.fin),
+    ]);
+    if (!deLaLlamada.includes(id)) {
       // El bloqueo tiene que seguir siendo de esta llamada (caduca si pasa mucho rato sin herramientas).
-      if (!(await dep.bloqueos.esMio(llamada.id, intervalo(o)))) {
+      if (!esMio) {
         const otraVez = await dep.bloqueos.reservar(llamada.id, [intervalo(o)], 1);
         if (!otraVez.length) {
           await dep.fichas.olvidar(llamada.id, ["hora", "ofrecidas"]);
@@ -342,7 +347,7 @@ export async function crearCita(ctx: Contexto, args: Argumentos): Promise<string
         }
       }
       // Y nadie tiene que haberla ocupado a mano en el calendario.
-      const pisa = (await dep.agenda.ocupado(o.calendario, o.inicio, o.fin)).some((x) => x.inicio < o.fin && o.inicio < x.fin);
+      const pisa = ocupado.some((x) => x.inicio < o.fin && o.inicio < x.fin);
       if (pisa) {
         await dep.bloqueos.soltar(llamada.id);
         await dep.fichas.olvidar(llamada.id, ["hora", "ofrecidas"]);
@@ -384,8 +389,10 @@ export async function crearCita(ctx: Contexto, args: Argumentos): Promise<string
     const respuesta =
       `Cita creada: ${fechaEnPalabras(o.fecha, hoyF)}, ${horaEnPalabras(o.hora)}, ${o.tratamiento}, a nombre de ${paciente}. ` +
       "Díselo así y pregúntale si necesita algo más. Si quiere otra cita, sea para quien sea, vuelve a anotar el nombre y los apellidos.";
-    await dep.bloqueos.soltar(llamada.id);
-    await dep.fichas.olvidar(llamada.id, ["tratamiento", "fecha", "hora", "ofrecidas", "nombre", "apellidos"]);
+    await Promise.all([
+      dep.bloqueos.soltar(llamada.id),
+      dep.fichas.olvidar(llamada.id, ["tratamiento", "fecha", "hora", "ofrecidas", "nombre", "apellidos"]),
+    ]);
     await dep.fichas.anotar(llamada.id, { paciente, ultima_cita: JSON.stringify({ hora: o.hora, respuesta }) });
     dep.registrar(`${llamada.id.slice(0, 8)} · crear_cita · ${o.fecha} ${o.hora} ${o.gabinete} → creada`);
     return respuesta;

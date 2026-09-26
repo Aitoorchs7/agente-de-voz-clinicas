@@ -79,7 +79,8 @@ export function sheetsFalso(pestanas: Record<string, { filas?: number; valores?:
             else h.celdas.set(k, v);
           }),
         );
-        return responder(200, {});
+        // Como Google: con includeValuesInResponse, devuelve lo que ha quedado guardado en el rango.
+        return responder(200, url.searchParams.get("includeValuesInResponse") === "true" ? { updatedData: { values: matriz(r.pestana, r) } } : {});
       }
     }
     return responder(404, { error: { message: `el falso no sabe hacer ${metodo} ${ruta}` } });
