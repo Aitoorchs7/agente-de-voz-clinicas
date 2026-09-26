@@ -130,7 +130,9 @@ por `escalar_a_recepcion` si se puede, y si no, dar el teléfono de recepción),
   mismo: `{ id, type: "function", function: { name, arguments } }` y **`arguments` como objeto**. Se lee
   `message.toolCallList[].function`. Autorización: `Authorization: Bearer …` de la credencial, correcta.
   El coste real: `message.cost` del `end-of-call-report` (0,2048 $ esta llamada; `message.call.cost` llega a 0).
-- Ruta de los tipos generados y del test que falla si cambia: *(pendiente: `src/vapi/contrato.ts`)*
+- Ruta de los tipos generados y del test que falla si cambia: `src/vapi/contrato.ts` (tipos y lectura
+  del POST) y `tests/contrato.test.ts` (lee los dos fixtures; falla si desaparece `toolCallList`, si
+  `arguments` deja de ser un objeto o si el coste deja de estar en `message.cost`).
 
 ### Los endpoints en Vercel
 | Herramienta | URL |
@@ -141,17 +143,43 @@ por `escalar_a_recepcion` si se puede, y si no, dar el teléfono de recepción),
 | `escalar_a_recepcion` | |
 | `end-of-call-report` | |
 
+### Cómo se declaran las herramientas en el asistente
+- Las cuatro propias (`consultar_huecos`, `anotar`, `crear_cita`, `escalar_a_recepcion`) y la de colgar
+  (`endCall`) están registradas en Vapi **sin URL propia** (`npm run herramientas` las crea o actualiza,
+  con PATCH completo y GET). Van a la URL del **asistente** (`server.url`), con la credencial `bearer`.
+- En el asistente: `model.toolIds` = esas cinco, el prompt compilado de los bloques, `server` con 10 s de
+  límite y un reintento, y `endCallPhrases: ["que vaya muy bien"]`. Lo construye `src/vapi/servidor.ts`.
+- El compilador no publica un prompt que nombre una herramienta que el asistente no tenga.
+
 ### Marcha atrás
 > Cómo se vuelve a las herramientas nativas si algo falla en mitad de una demo.
--
+- **`npm run cambiar-diego -- --nativas`**, desde esta carpeta (hace falta el `.env`). Deja el `model`
+  (prompt `v16`, Calendar y Sheets nativas) y los mensajes **exactamente** como en la copia
+  `fichas/dentalvis/nativas.json`, que se guarda sola en el primer cambio a las propias. Tarda unos
+  segundos y se comprueba con un GET: se puede hacer entre dos llamadas de la demo.
+- `--simular` delante dice qué cambiaría sin tocar nada.
+- Para volver a las propias: `npm run cambiar-diego -- --propias --url https://<proyecto>.vercel.app`.
+  Antes de tocar a Diego comprueba que el servidor contesta (405 a un GET, 401 sin credencial); si no,
+  no hace nada.
+- Si ni eso funciona: en el panel de Vapi, Diego → *Tools*, quitar las cuatro propias y poner las tres
+  nativas (`google_calendar_check`, `google_calendar_agendamiento`, `google_sheets_tool`). El prompt de las
+  propias con las nativas no sirve: por eso el script restaura las dos cosas a la vez.
 
 ### El bloqueo temporal
-- Cómo funciona:
-- **Cuánto tarda en caducar:** ← la Fase 4 cuelga llamadas a mitad; va a chocar con esto
-- Resultado de la prueba de dos llamadas simultáneas:
+- Cómo funciona: Redis (Upstash, UE), un script Lua atómico por reserva; `consultar_huecos` reserva lo
+  que ofrece (dos horas como mucho), elegir una suelta la otra, `crear_cita` lo suelta al crear, y **al
+  colgar se sueltan todos en el acto**. Detalle y alternativas: `ADR-004-bloqueo-y-atomicidad.md`.
+- **Cuánto tarda en caducar:** **4 minutos desde la última herramienta de la llamada** (cada herramienta
+  lo renueva). Solo actúa si se pierde el aviso de fin de llamada; al colgar normalmente se suelta en el
+  acto (llamada 3). ← la Fase 4 cuelga llamadas a mitad; va a chocar con esto
+- Resultado de la prueba de dos llamadas simultáneas: *(pendiente: llamada 4, a Diego en Vercel)*. Sin
+  red y contra Upstash: diez reservas a la vez del mismo hueco → una gana.
 
 ### La pestaña `Llamadas`
-- ¿Se está rellenando con el **coste real** de cada llamada? (sí/no)
+- ¿Se está rellenando con el **coste real** de cada llamada? **Sí** (desde el asistente de pruebas; en
+  Diego, desde el cambio): `message.cost` del `end-of-call-report`, como número (0,2489 $ y 0,1071 $ en
+  las llamadas 2 y 3), con la duración en segundos, el motivo de fin en español, un resumen en español
+  (Gemini `gemini-3.1-flash-lite`) y la transcripción. Una fila por llamada (`id_llamada`).
 
 ### La prueba de las 00:30
 - Fecha y hora reales de la llamada:
