@@ -10,6 +10,10 @@ import type { Redis } from "../bloqueo/redis.js";
 
 export const CAMPOS_FICHA = [
   "tratamiento", "fecha", "hora", "nombre", "apellidos", "telefono", "quien_llama", "sin_telefono_avisado",
+  // Las horas que `consultar_huecos` ha reservado y ofrecido (JSON), el paciente de la última cita creada
+  // (para un aviso a recepción después) y esa última cita (JSON: si Vapi repite `crear_cita`, se contesta
+  // lo mismo en vez de decir que la hora ya no está reservada).
+  "ofrecidas", "paciente", "ultima_cita",
 ] as const;
 export type CampoFicha = (typeof CAMPOS_FICHA)[number];
 export type DatosAnotados = Partial<Record<CampoFicha, string>>;

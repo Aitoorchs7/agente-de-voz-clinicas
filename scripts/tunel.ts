@@ -3,7 +3,8 @@
 // existir. Este script arranca cloudflared, apunta el asistente de PRUEBAS a la dirección nueva y, si el
 // túnel se cae o deja de contestar, lo vuelve a levantar y a apuntar. Diego no se toca nunca.
 //
-//   npm run receptor                          → servidor local de captura + túnel, los dos vigilados
+//   npm run receptor                          → servidor local (modo real) + túnel, los dos vigilados
+//   npm run receptor -- --captura             → lo mismo, con el servidor en modo captura
 //   npm run tunel                             → solo el túnel (el servidor ya escuchando en el 8787)
 //
 // Todo vive lo que viva este proceso. El 26-sep una llamada de prueba encontró el túnel muerto porque
@@ -22,6 +23,7 @@ const BINARIO =
   ["C:\\Program Files (x86)\\cloudflared\\cloudflared.exe", "C:\\Program Files\\cloudflared\\cloudflared.exe"].find(existsSync) ??
   "cloudflared";
 const conServidor = process.argv.includes("--con-servidor");
+const modoCaptura = process.argv.includes("--captura");
 
 let proceso: ChildProcess | null = null;
 let servidor: ChildProcess | null = null;
@@ -36,7 +38,7 @@ function script(fichero: string, argumentos: string[]): ChildProcess {
 }
 
 function arrancarServidor(): void {
-  servidor = script("scripts/servidor-local.ts", ["--captura"]);
+  servidor = script("scripts/servidor-local.ts", modoCaptura ? ["--captura"] : []);
   const reenviar = (d: Buffer) => process.stdout.write(d.toString().replace(/^(?=.)/gm, "  [servidor] "));
   servidor.stdout!.on("data", reenviar);
   servidor.stderr!.on("data", reenviar);
@@ -107,6 +109,6 @@ function parar(): void {
 process.on("SIGINT", parar);
 process.on("SIGTERM", parar);
 
-console.log(`Túnel vigilado hacia http://localhost:${PUERTO} (${BINARIO})${conServidor ? ", con el servidor de captura" : ""}. Ctrl+C para parar.`);
+console.log(`Túnel vigilado hacia http://localhost:${PUERTO} (${BINARIO})${conServidor ? `, con el servidor en modo ${modoCaptura ? "captura" : "real"}` : ""}. Ctrl+C para parar.`);
 if (conServidor) arrancarServidor();
 arrancar();

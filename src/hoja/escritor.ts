@@ -29,6 +29,8 @@ export interface Escritor {
     valores: Readonly<Record<string, Celda>>,
     opciones?: { igual?: readonly string[] },
   ): Promise<{ fila: number; yaEstaba: boolean }>;
+  /** ¿Hay alguna fila con ese valor en esa columna? */
+  hay(pestana: Pestana, columna: string, valor: string): Promise<boolean>;
 }
 
 /** Filas que se leen como mucho para buscar la libre. Cerrado, como todo rango. */
@@ -82,6 +84,17 @@ export function escritorDeHoja(
   }
 
   return {
+    async hay(pestana, columna, valor) {
+      const rango = encodeURIComponent(`'${pestana.nombre}'!A1:Z${FILAS_LEIDAS}`);
+      const leido = await pedir<{ values?: unknown[][] }>(
+        "GET", `${base}/values/${rango}?valueRenderOption=UNFORMATTED_VALUE&majorDimension=ROWS`, `leer ${pestana.nombre}`,
+      );
+      const filas = leido.values ?? [];
+      const pos = posicionesDeColumnas(pestana, filas[0] ?? []).get(normalizar(columna));
+      if (pos === undefined) throw new ErrorDeHoja(`A la pestaña ${pestana.nombre} le falta la columna «${columna}».`);
+      return filas.some((f, i) => i > 0 && String(f[pos] ?? "") === valor);
+    },
+
     async escribir(pestana, valores, opciones = {}) {
       const desconocidas = Object.keys(valores).filter((c) => !pestana.columnas.some((x) => normalizar(x) === normalizar(c)));
       if (desconocidas.length) throw new ErrorDeHoja(`${pestana.nombre} no tiene la columna ${desconocidas.join(", ")} en su esquema.`);
