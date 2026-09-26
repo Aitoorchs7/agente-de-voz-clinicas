@@ -34,7 +34,7 @@ Las herramientas, con lo que hace cada una y lo que devuelve (§6):
 | Herramienta | Tipo | Qué hace | Devuelve |
 | --- | --- | --- | --- |
 | `consultar_huecos` | Custom (webhook) | Huecos reales según **duración del tratamiento** y **gabinete**. No es un free/busy pelado | 2–3 opciones, en lenguaje natural |
-| `anotar` | Custom (webhook) | Valida **un dato cada vez** (nombre, teléfono, tratamiento, día) | OK, o el problema concreto |
+| `anotar` | Custom (webhook) | Valida **en el momento** lo que el paciente acaba de decir (nombre, apellidos, teléfono, la hora que elige), varios a la vez si van juntos *(26-sep-2026)* | OK y el paso siguiente, o el problema concreto |
 | `crear_cita` | Custom (webhook) | Evento en Calendar **+** fila en `Citas`, de forma atómica | Confirmación o el motivo del fallo |
 | `escalar_a_recepcion` | Custom (webhook) | Fila en `Escalados` + aviso | Confirmación |
 | `transferir_llamada` | Nativa Vapi | Pasa al teléfono de recepción | — |
@@ -167,8 +167,9 @@ desplegado en Vercel, en el mismo repositorio que el compilador y los bloques»*
 8. **`consultar_huecos` devuelve 2–3 opciones en lenguaje natural**, no una lista de slots. Es una
    llamada de teléfono: sin pantalla, sin listas, y los números se dicen en palabras.
 
-9. **`anotar` valida UN dato cada vez.** Del §6: *«El bot llama a `anotar` cada vez que el paciente
-   le da un dato, y solo con ese dato. Si vuelve con un problema —un teléfono de ocho dígitos, un
+9. **`anotar` valida en el momento lo que el paciente acaba de decir** (desde el 26-sep-2026, varios
+   datos a la vez si los dice juntos; el tratamiento y el día, `consultar_huecos`). Del §6, lo que no
+   cambia: *«Si vuelve con un problema —un teléfono de ocho dígitos, un
    nombre que no se entiende— el bot lo pide otra vez explicando qué pasa: "creo que falta un
    número, ¿me lo repite?". Nunca lo apunta a medias y nunca lo completa él.»*
    *«Esto evita el fallo más caro del agente de voz: llegar al final de la conversación con cuatro

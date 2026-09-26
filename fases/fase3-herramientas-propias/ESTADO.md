@@ -9,50 +9,26 @@
 
 ## ⏳ Lo que necesito de ti ahora
 
-### 1. Dos decisiones tras la llamada 1 (hecha el 26-sep, 13:51)
+**Nada, por ahora.** Estoy reescribiendo los bloques del prompt para las herramientas propias, en la rama
+`fase3-bloques` (Diego sigue en `main` con las nativas, sin tocar). Cuando el asistente de pruebas tenga
+el prompt nuevo, te pido aquí la **llamada 2**.
 
-La llamada 1 dio lo que buscaba (el contrato, abajo) y **tres fallos que tú oíste**. Los tres tienen la
-misma raíz: **dejarle al modelo algo que el servidor sabe hacer mejor.**
+### Decidido el 26-sep-2026, tras la llamada 1
 
-| Lo que oíste | Qué pasó de verdad (del registro de Vapi) |
-| --- | --- |
-| **Tardó en procesar al principio** (casi 13 s de «un segundo») | Acabaste de hablar en el segundo 21,8 y la respuesta llegó en el 34,6. En medio, **cuatro herramientas una detrás de otra**: `anotar` ×3 (tratamiento, fecha, hora) y la comprobación del calendario. Cada una es un turno del modelo, con su «un segundo». Las tres `anotar` sobraban: las provoqué yo con la descripción de la herramienta de captura. |
-| **Ofreció «este mismo número»** en una llamada web, sin número | El modelo **vio** la línea `«{{customer.number}}»` y la regla de que un texto entre llaves significa que no hay número, y **aun así lo ofreció**. El arreglo de la `v15` **no funciona**: es una regla que el modelo tiene que aplicar él solo, lejos del momento en que la necesita. |
-| **Leyó el teléfono «6 1 2 coma 3 coma 4…»** | El bloque 50 dice «los nueve, uno por uno, **separados por comas**». El modelo escribió la palabra «coma» y las cifras en número. |
+- **A, sí:** `consultar_huecos` apunta ella misma tratamiento y día; `anotar` recibe varios datos a la
+  vez; el teléfono lo decide el servidor en su respuesta (si la llamada trae número o no, y las cifras ya
+  en palabras para leerlas tal cual). *«Si tú crees que van a mejorar la eficiencia y seguridad del bot.»*
+- **B:** a Diego no se le parchea: no hay otra demo antes del cambio.
+- Gabinete 2: permisos cambiados. Los tres calendarios responden ahora `owner` (bastaría `writer`,
+  «Hacer cambios en eventos»; no bloquea nada).
 
-**Decisión A — el diseño de las herramientas (recomiendo el sí).** Tres cambios sobre lo aprobado:
+### Lo que enseñó la llamada 1 (26-sep, 13:51, `01a0dd8e-…`)
 
-1. `consultar_huecos` **apunta ella misma** el tratamiento, el día y la hora que pide el paciente. Para
-   eso no hay `anotar`. En esta llamada, eso deja una sola herramienta al principio en vez de cuatro.
-2. `anotar` acepta **varios datos en una sola llamada** (nombre y apellidos juntos) en vez de uno solo.
-3. **El servidor decide lo del teléfono y lo dice en el momento.** Al anotar los apellidos, la respuesta
-   dice «Esta llamada no trae número: pídeselo» o «Viene del 612…: pregúntale si le llamamos a ese».
-   Al anotar un teléfono, la respuesta trae **las cifras ya escritas en palabras** («seis, uno, dos, …»)
-   y la orden de leerlas tal cual. El bloque 50 deja de hablar de `{{customer.number}}` y de «comas».
-
-**Decisión B — Diego mientras tanto.** Diego tiene ahora mismo los dos fallos del teléfono en cada demo
-por el navegador. Recomiendo **no parchearlo**: el cambio a las herramientas propias es de esta fase y
-los arregla de raíz, y un parche de prompt ya falló una vez. Si tienes una demo antes, dímelo y le pongo
-un `v17` mínimo: pedir siempre el teléfono y leerlo en palabras.
-
-
-### 2. «Gabinete 2»: la cuenta de servicio solo puede VER, no escribir
-
-Los IDs ya están dados de alta y apuntados en `fichas/dentalvis/ficha.json` (el segundo que me pasaste
-como «Gabinete 1» es, según Google, **«Gabinete 3 »**: lo he comprobado por su nombre). Lo que ve ahora
-la cuenta de servicio:
-
-| Calendario | Permiso | ¿Vale? |
+| Lo que oíste | Qué pasó de verdad (del registro de Vapi) | Arreglo |
 | --- | --- | --- |
-| Gabinete 1 | `writer` | ✅ |
-| Gabinete 2 | `reader` | ❌ **solo lectura**: no podría crear citas de ortodoncia (`ORT`) |
-| Gabinete 3 | `writer` | ✅ |
-
-**Qué hacer:** Google Calendar → ⚙ Configuración → «Gabinete 2» → **Compartir con determinadas personas**
-→ la cuenta de servicio → cambiar el permiso a **«Hacer cambios en eventos»**. Avísame y lo compruebo.
-No corre prisa: lo necesito cuando escriba en calendarios, no para la llamada 1.
-
----
+| Tardó casi 13 s en contestar al principio | Cuatro herramientas seguidas (`anotar` ×3 + calendario), cada una un turno del modelo con su «un segundo». Las tres `anotar` las provocó la descripción de captura | Decisión A: una sola herramienta al principio |
+| Ofreció «este mismo número» sin haberlo | El modelo vio `«{{customer.number}}»` sin rellenar y la regla de la `v15`, y la ignoró | El servidor lo dice en la respuesta de `anotar` |
+| Leyó «6 1 2 coma 3 coma 4…» | El bloque 50 decía «separados por comas» | `anotar` devuelve las cifras en palabras; el bloque deja de hablar de comas |
 
 ## Lo hecho hasta ahora (25-sep-2026)
 
@@ -72,6 +48,8 @@ No corre prisa: lo necesito cuando escriba en calendarios, no para la llamada 1.
 | **Bloqueo temporal** en Redis (scripts Lua atómicos), ficha de la llamada y candado de la hoja | La misma batería en memoria y **contra Upstash de verdad**: 18 de 18, incluidas **diez llamadas a la vez por la misma hora → se la lleva una** |
 | Calendarios por gabinete (26-sep) | Los tres dados de alta en la lista de la cuenta de servicio y apuntados en la ficha (`calendarios`, clave = nombre del gabinete de Tratamientos). Gabinete 2 solo en lectura: ver arriba |
 | **Llamada 1** (26-sep, 13:51, `01a0dd8e-…`) | (b) contrato capturado ✅ · (c) fila en `Llamadas_fase1` con el teléfono en cifras ✅ (la migración funciona; la cita, a las 18:00 de Madrid, bien) · (a) teléfono ❌: ofreció «este mismo número» sin haberlo. Evento de prueba borrado de «Gabinete 1» (copia en `registro/`) |
+| **Las cuatro herramientas, el cierre y el webhook** (26-sep) | `src/herramientas/manejadores.ts`, `src/llamada/cierre.ts`, `src/vapi/webhook.ts`, `api/vapi.ts`. 250 pruebas sin red (incluidas dos llamadas a la vez por la misma hora, bloqueo caducado, compensación si falla la hoja, reintento de Vapi, eventos huérfanos al colgar) |
+| **Prueba de humo contra los servicios de verdad** (`npm run humo`) | La cadena entera con los POST que mandaría Vapi: cita en «Gabinete 1», filas en `Citas`, `Escalados` y `Llamadas` (resumen de Gemini en español, coste como número), y todo borrado después con `npm run limpiar-pruebas`. Tiempos: `consultar_huecos` 1,4 s (leyendo la hoja por primera vez) · `anotar` 0,25 s · `crear_cita` 1,8 s · `escalar_a_recepcion` 1,3 s |
 | Receptor de desarrollo en un solo comando (26-sep) | `npm run receptor`: servidor + túnel vigilados. Prueba de humo desde fuera con la credencial: `tool-calls` → «Anotado.» |
 
 **Lo que enseñó el primer intento de la llamada 1** (y que va a los bloques y a la configuración del
@@ -143,5 +121,7 @@ por `escalar_a_recepcion` si se puede, y si no, dar el teléfono de recepción),
   patrón de bloqueo sí, almacén no; la documentación de Vapi se contradice sobre el webhook; qué es el
   «aviso»), §4 (calendarios por gabinete en la ficha, `id_llamada`), §10 (coherente con lo de Vercel) y
   `ORQUESTACION.md` (diez bloques, un solo endpoint).
-- **Pendientes, ya aprobadas:** reescribir en el §6 la frase del formato del webhook con lo que diga el
-  fixture; marcar en el §5 el `70` y `{{hoja_id}}` como retirados, al cerrar la fase.
+- **Aplicadas el 26-sep-2026:** §6, el formato del webhook reescrito con el fixture real (aprobado el 25);
+  §6, `anotar` ya no es «un dato cada vez, y solo con ese dato», sino lo que el paciente diga en esa frase,
+  y el tratamiento y el día los apunta `consultar_huecos` (decisión A del humano, tras la llamada 1).
+- **Pendiente, ya aprobada:** marcar en el §5 el `70` y `{{hoja_id}}` como retirados, al cerrar la fase.

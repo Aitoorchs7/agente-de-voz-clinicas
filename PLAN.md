@@ -234,7 +234,7 @@ Lo que el bot **puede hacer**. Todo lo demás lo responde desde el prompt, que y
 | Herramienta | Tipo | Qué hace | Devuelve |
 | --- | --- | --- | --- |
 | `consultar_huecos` | Custom (webhook) | Huecos reales según **duración del tratamiento** y **gabinete**. No es un free/busy pelado | 2–3 opciones, en lenguaje natural |
-| `anotar` | Custom (webhook) | Valida **un dato cada vez** (nombre, teléfono, tratamiento, día) | OK, o el problema concreto |
+| `anotar` | Custom (webhook) | Valida **en el momento** lo que el paciente acaba de decir (nombre, apellidos, teléfono, la hora que elige); varios datos a la vez si los dice juntos. El tratamiento y el día los apunta `consultar_huecos` | OK y el paso siguiente, o el problema concreto |
 | `crear_cita` | Custom (webhook) | Evento en Calendar **+** fila en `Citas`, de forma atómica | Confirmación o el motivo del fallo |
 | `escalar_a_recepcion` | Custom (webhook) | Fila en `Escalados` + aviso (el **aviso** es la frase con la que el bot le dice al paciente que recepción le llamará; no hay aviso en tiempo real a la clínica: decidido el 25-sep-2026) | Confirmación |
 | `transferir_llamada` | Nativa Vapi | Pasa al teléfono de recepción | — |
@@ -243,7 +243,7 @@ Lo que el bot **puede hacer**. Todo lo demás lo responde desde el prompt, que y
 
 ### Por qué `anotar` existe
 
-Viene de la V2 de WhatsApp y por teléfono vale todavía más. El bot llama a `anotar` **cada vez** que el paciente le da un dato, y solo con ese dato. Si vuelve con un problema —un teléfono de ocho dígitos, un nombre que no se entiende— el bot lo pide otra vez **explicando qué pasa**: *«creo que falta un número, ¿me lo repite?»*. Nunca lo apunta a medias y nunca lo completa él.
+Viene de la V2 de WhatsApp y por teléfono vale todavía más. El bot llama a `anotar` **en cuanto** el paciente le da un dato, con lo que haya dicho en esa frase (si dice nombre y apellidos, van juntos). *(Hasta el 26-sep-2026 era «un dato cada vez, y solo con ese dato»; la llamada 1 enseñó que cada herramienta es un turno del modelo con su «un segundo», y cuatro seguidas fueron trece segundos de espera. Decidido con el humano.)* Si vuelve con un problema —un teléfono de ocho dígitos, un nombre que no se entiende— el bot lo pide otra vez **explicando qué pasa**: *«creo que falta un número, ¿me lo repite?»*. Nunca lo apunta a medias y nunca lo completa él.
 
 Esto evita el fallo más caro del agente de voz: llegar al final de la conversación con cuatro datos y descubrir que uno está mal.
 
