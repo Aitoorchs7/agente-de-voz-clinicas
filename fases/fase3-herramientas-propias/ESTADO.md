@@ -9,9 +9,30 @@
 
 ## ⏳ Lo que necesito de ti ahora
 
-**Nada, por ahora.** Estoy reescribiendo los bloques del prompt para las herramientas propias, en la rama
-`fase3-bloques` (Diego sigue en `main` con las nativas, sin tocar). Cuando el asistente de pruebas tenga
-el prompt nuevo, te pido aquí la **llamada 2**.
+### La llamada 2 — las herramientas propias de verdad (lista desde el 26-sep, 14:55)
+
+- **A qué asistente:** **`PRUEBAS F3 · no usar en demos`**, con **Talk**. **No a Diego**, que sigue con
+  las nativas y sin tocar. El de pruebas ya **no tiene ninguna herramienta nativa**: solo
+  `consultar_huecos`, `anotar`, `crear_cita`, `escalar_a_recepcion` y colgar, con el prompt nuevo.
+- **El guion** (una sola llamada que prueba varias cosas; di los datos inventados que quieras):
+  1. *«Quería una limpieza para el martes que viene a las tres de la tarde.»* → Tiene que decirte que a
+     esa hora **la clínica está cerrada** (no «ocupada») y ofrecerte **una antes y otra después**: la una y
+     cuarto o las cuatro.
+  2. Elige **las cuatro**.
+  3. Di **nombre y apellidos en la misma frase**. → Te los repite y espera tu sí.
+  4. El teléfono: **tiene que pedírtelo**, sin ofrecerte «este mismo número».
+  5. Dale uno **con solo ocho cifras** a propósito. → Tiene que decirte que falta una y pedírtelo otra vez.
+  6. Dale las **nueve**. → Tiene que leértelo **en palabras, cifra a cifra**, sin decir «coma».
+  7. Confirma la cita. → «Queda apuntada».
+  8. Pregunta algo que no está en los datos, por ejemplo *«¿se puede pagar con Bizum?»*. → «Eso se lo
+     confirma recepción», y tiene que dejar el aviso.
+  9. Despídete y deja que cuelgue él.
+- **Qué compruebo yo después:** el orden de las herramientas y cuánto tardó cada una, el evento en
+  «Gabinete 1» (martes 29, de 16:00 a 16:45), las filas en `Citas`, `Escalados` y `Llamadas` (con el
+  resumen en español y el coste real), y que no dijo nada de lo de la llamada 1.
+- Va por el túnel hasta mi ordenador: cada herramienta tarda un poco más que en Vercel (Vapi llama desde
+  EE. UU.). El receptor está en marcha; si vas a llamar sin que yo esté, `npm run receptor` en una terminal.
+- Lo que cree es de prueba: lo borro después con `npm run limpiar-pruebas`, salvo que quieras verlo antes.
 
 ### Decidido el 26-sep-2026, tras la llamada 1
 
@@ -50,6 +71,8 @@ el prompt nuevo, te pido aquí la **llamada 2**.
 | **Llamada 1** (26-sep, 13:51, `01a0dd8e-…`) | (b) contrato capturado ✅ · (c) fila en `Llamadas_fase1` con el teléfono en cifras ✅ (la migración funciona; la cita, a las 18:00 de Madrid, bien) · (a) teléfono ❌: ofreció «este mismo número» sin haberlo. Evento de prueba borrado de «Gabinete 1» (copia en `registro/`) |
 | **Las cuatro herramientas, el cierre y el webhook** (26-sep) | `src/herramientas/manejadores.ts`, `src/llamada/cierre.ts`, `src/vapi/webhook.ts`, `api/vapi.ts`. 250 pruebas sin red (incluidas dos llamadas a la vez por la misma hora, bloqueo caducado, compensación si falla la hoja, reintento de Vapi, eventos huérfanos al colgar) |
 | **Prueba de humo contra los servicios de verdad** (`npm run humo`) | La cadena entera con los POST que mandaría Vapi: cita en «Gabinete 1», filas en `Citas`, `Escalados` y `Llamadas` (resumen de Gemini en español, coste como número), y todo borrado después con `npm run limpiar-pruebas`. Tiempos: `consultar_huecos` 1,4 s (leyendo la hoja por primera vez) · `anotar` 0,25 s · `crear_cita` 1,8 s · `escalar_a_recepcion` 1,3 s |
+| **Bloques para las herramientas propias**, en la rama `fase3-bloques` (26-sep) | 30 = V1 salvo lo decidido; 50 y 60 reescritos; retirados el 70, `{{hoja_id}}`, `google_sheets_tool.md` y la parte de Sheets de `publicar.ts`. El compilador ya no publica un prompt que nombre una herramienta que el asistente no tenga. 253 pruebas |
+| **Asistente de pruebas con las herramientas propias** (26-sep) | GET: solo las cuatro + colgar, prompt nuevo (sin `google_` ni `{{customer.number}}`), servidor con 10 s y un reintento. Una petición real por el túnel: 1,6 s ida y vuelta; sin credencial, 401 |
 | Receptor de desarrollo en un solo comando (26-sep) | `npm run receptor`: servidor + túnel vigilados. Prueba de humo desde fuera con la credencial: `tool-calls` → «Anotado.» |
 
 **Lo que enseñó el primer intento de la llamada 1** (y que va a los bloques y a la configuración del

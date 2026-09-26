@@ -106,8 +106,16 @@ export const enFranja = (h: Hueco, franja: Franja) =>
  */
 export function ordenParaOfrecer(huecos: readonly Hueco[], opciones: { cerca?: Hora } = {}): Hueco[] {
   if (opciones.cerca) {
+    // La más cercana, y después la más cercana del OTRO lado: pedida a las 15:00 con la clínica cerrada
+    // de 14 a 16, mejor «la una y cuarto o las cuatro» que «las cuatro o las cuatro y cuarto».
     const objetivo = aMinutos(opciones.cerca);
-    return [...huecos].sort((a, b) => Math.abs(aMinutos(a.hora) - objetivo) - Math.abs(aMinutos(b.hora) - objetivo) || a.inicio - b.inicio);
+    const distancia = (h: Hueco) => Math.abs(aMinutos(h.hora) - objetivo);
+    const porCercania = (a: Hueco, b: Hueco) => distancia(a) - distancia(b) || a.inicio - b.inicio;
+    const antes = huecos.filter((h) => aMinutos(h.hora) < objetivo).sort(porCercania);
+    const despues = huecos.filter((h) => aMinutos(h.hora) >= objetivo).sort(porCercania);
+    const [primero, segundo] = [antes[0], despues[0]].filter((h): h is Hueco => !!h).sort(porCercania);
+    const resto = [...antes, ...despues].filter((h) => h !== primero && h !== segundo).sort(porCercania);
+    return [primero, segundo, ...resto].filter((h): h is Hueco => !!h);
   }
   const intercalar = (a: readonly Hueco[], b: readonly Hueco[]) => {
     const salida: Hueco[] = [];

@@ -110,5 +110,14 @@ process.on("SIGINT", parar);
 process.on("SIGTERM", parar);
 
 console.log(`Túnel vigilado hacia http://localhost:${PUERTO} (${BINARIO})${conServidor ? `, con el servidor en modo ${modoCaptura ? "captura" : "real"}` : ""}. Ctrl+C para parar.`);
+// En Windows, matar este proceso no mata a sus hijos: un receptor anterior puede seguir escuchando en el
+// puerto (visto el 26-sep: el servidor de captura viejo seguía contestando). Con eso, no se arranca.
+if (conServidor && (await fetch(`http://localhost:${PUERTO}/salud`, { signal: AbortSignal.timeout(2_000) }).then((r) => r.ok).catch(() => false))) {
+  console.error(
+    `Ya hay algo escuchando en el ${PUERTO} (¿un receptor anterior que quedó vivo?). Ciérralo antes: ` +
+      `Get-NetTCPConnection -LocalPort ${PUERTO} en PowerShell dice qué proceso es, y cloudflared también hay que cerrarlo.`,
+  );
+  process.exit(1);
+}
 if (conServidor) arrancarServidor();
 arrancar();

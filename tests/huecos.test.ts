@@ -92,6 +92,12 @@ describe("el orden en que se ofrecen", () => {
     expect(orden.slice(0, 2)).toEqual(["09:00", "11:30"]);
   });
 
+  it("si pidió una hora en la que está cerrado, una antes y otra después", () => {
+    const orden = ordenParaOfrecer(huecosDelDia(dia()), { cerca: "15:00" }).map((h) => h.hora);
+    expect(orden.slice(0, 2)).toEqual(["16:00", "13:15"]);
+    expect(orden).toHaveLength(huecosDelDia(dia()).length);
+  });
+
   it("si pidió una hora ocupada, las más cercanas a esa hora", () => {
     const ocupado = [{ inicio: t(MARTES, "18:00"), fin: t(MARTES, "18:45") }];
     const orden = ordenParaOfrecer(huecosDelDia(dia({ ocupado })), { cerca: "18:00" }).map((h) => h.hora);
