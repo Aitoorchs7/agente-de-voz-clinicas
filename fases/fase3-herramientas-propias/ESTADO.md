@@ -9,38 +9,32 @@
 
 ## ⏳ Lo que necesito de ti ahora
 
-### 1. La llamada 1, OTRA VEZ — captura del contrato + teléfono + migración (lista desde el 26-sep, 13:47)
+### 1. Dos decisiones tras la llamada 1 (hecha el 26-sep, 13:51)
 
-> **Qué pasó en el primer intento (26-sep, 13:39, llamada `01a0dd82-…`).** No fue culpa tuya ni del bot: el
-> túnel y el receptor vivían en mi sesión, la sesión se cerró durante la noche y se los llevó. En el
-> segundo 34 el bot llamó a `anotar` con la fecha (`{"campo":"fecha","valor":"2026-09-29"}`: el «martes»
-> lo convirtió bien él solo), Vapi no encontró la dirección (`getaddrinfo ENOTFOUND …trycloudflare.com`),
-> el bot dijo «miro la agenda para el martes 29» y se quedó callado hasta que Vapi colgó por silencio
-> (`silence-timed-out`, a los 73 s). No llegó nada a mi receptor.
->
-> **Arreglado:** ahora hay un solo comando, `npm run receptor`, que levanta el servidor y el túnel y
-> vigila los dos. Lo tengo corriendo; si alguna vez vas a llamar sin que yo esté, lánzalo tú en una
-> terminal y déjala abierta. Probado desde fuera con la credencial, como llamaría Vapi.
+La llamada 1 dio lo que buscaba (el contrato, abajo) y **tres fallos que tú oíste**. Los tres tienen la
+misma raíz: **dejarle al modelo algo que el servidor sabe hacer mejor.**
 
-- **A qué asistente:** **`PRUEBAS F3 · no usar en demos`** (panel de Vapi → Assistants → ese → **Talk**).
-  **No a Diego.** Es una copia exacta de Diego (mismo prompt `v16`, voz, modelo y herramientas nativas)
-  con dos cosas más: la herramienta `anotar` y el servidor apuntando a mi receptor.
-- **Qué hacer:**
-  1. Pide cita para **una limpieza**, el día que quieras dentro del horario.
-  2. Da un **nombre y un apellido inventados**.
-  3. Cuando llegue el teléfono, **fíjate en si te lo PIDE o te ofrece «este mismo número»**. Tiene que
-     pedírtelo: en una llamada web no hay número. Dale uno **inventado de nueve cifras**.
-  4. Confirma la cita.
-  5. **Despídete y deja que cuelgue él.** Si cuelgas tú antes, puede no llegar a apuntar la fila en
-     `Llamadas_fase1`, y es una de las tres cosas que compruebo.
-- **Qué saco de esta llamada:** (a) que el bot pide el teléfono; (b) los dos POST reales, `tool-calls` y
-  `end-of-call-report`, que son el contrato; (c) la fila en `Llamadas_fase1`, con el teléfono en cifras.
-- **El receptor y el túnel están corriendo** (`npm run receptor`), vigilados: si el túnel cae (el del
-  25-sep murió solo a los 40 minutos), se levanta otro y el asistente de pruebas se reapunta solo. Si aun
-  así el bot se queda callado o dice que no puede apuntar, dímelo: una llamada en curso no sobrevive a un
-  cambio de túnel.
-- La cita que cree es de prueba (irá al calendario «Gabinete 1» por la herramienta nativa). La borraré
-  al comprobarla, salvo que me digas que la deje.
+| Lo que oíste | Qué pasó de verdad (del registro de Vapi) |
+| --- | --- |
+| **Tardó en procesar al principio** (casi 13 s de «un segundo») | Acabaste de hablar en el segundo 21,8 y la respuesta llegó en el 34,6. En medio, **cuatro herramientas una detrás de otra**: `anotar` ×3 (tratamiento, fecha, hora) y la comprobación del calendario. Cada una es un turno del modelo, con su «un segundo». Las tres `anotar` sobraban: las provoqué yo con la descripción de la herramienta de captura. |
+| **Ofreció «este mismo número»** en una llamada web, sin número | El modelo **vio** la línea `«{{customer.number}}»` y la regla de que un texto entre llaves significa que no hay número, y **aun así lo ofreció**. El arreglo de la `v15` **no funciona**: es una regla que el modelo tiene que aplicar él solo, lejos del momento en que la necesita. |
+| **Leyó el teléfono «6 1 2 coma 3 coma 4…»** | El bloque 50 dice «los nueve, uno por uno, **separados por comas**». El modelo escribió la palabra «coma» y las cifras en número. |
+
+**Decisión A — el diseño de las herramientas (recomiendo el sí).** Tres cambios sobre lo aprobado:
+
+1. `consultar_huecos` **apunta ella misma** el tratamiento, el día y la hora que pide el paciente. Para
+   eso no hay `anotar`. En esta llamada, eso deja una sola herramienta al principio en vez de cuatro.
+2. `anotar` acepta **varios datos en una sola llamada** (nombre y apellidos juntos) en vez de uno solo.
+3. **El servidor decide lo del teléfono y lo dice en el momento.** Al anotar los apellidos, la respuesta
+   dice «Esta llamada no trae número: pídeselo» o «Viene del 612…: pregúntale si le llamamos a ese».
+   Al anotar un teléfono, la respuesta trae **las cifras ya escritas en palabras** («seis, uno, dos, …»)
+   y la orden de leerlas tal cual. El bloque 50 deja de hablar de `{{customer.number}}` y de «comas».
+
+**Decisión B — Diego mientras tanto.** Diego tiene ahora mismo los dos fallos del teléfono en cada demo
+por el navegador. Recomiendo **no parchearlo**: el cambio a las herramientas propias es de esta fase y
+los arregla de raíz, y un parche de prompt ya falló una vez. Si tienes una demo antes, dímelo y le pongo
+un `v17` mínimo: pedir siempre el teléfono y leerlo en palabras.
+
 
 ### 2. «Gabinete 2»: la cuenta de servicio solo puede VER, no escribir
 
@@ -77,6 +71,7 @@ No corre prisa: lo necesito cuando escriba en calendarios, no para la llamada 1.
 | Hora de la clínica, fechas y horas en palabras, validación de teléfono y nombre (de la V1) | Pruebas de la franja 23:00–01:00 minuto a minuto y de los cambios de hora del 29-mar y 25-oct-2026 |
 | **Bloqueo temporal** en Redis (scripts Lua atómicos), ficha de la llamada y candado de la hoja | La misma batería en memoria y **contra Upstash de verdad**: 18 de 18, incluidas **diez llamadas a la vez por la misma hora → se la lleva una** |
 | Calendarios por gabinete (26-sep) | Los tres dados de alta en la lista de la cuenta de servicio y apuntados en la ficha (`calendarios`, clave = nombre del gabinete de Tratamientos). Gabinete 2 solo en lectura: ver arriba |
+| **Llamada 1** (26-sep, 13:51, `01a0dd8e-…`) | (b) contrato capturado ✅ · (c) fila en `Llamadas_fase1` con el teléfono en cifras ✅ (la migración funciona; la cita, a las 18:00 de Madrid, bien) · (a) teléfono ❌: ofreció «este mismo número» sin haberlo. Evento de prueba borrado de «Gabinete 1» (copia en `registro/`) |
 | Receptor de desarrollo en un solo comando (26-sep) | `npm run receptor`: servidor + túnel vigilados. Prueba de humo desde fuera con la credencial: `tool-calls` → «Anotado.» |
 
 **Lo que enseñó el primer intento de la llamada 1** (y que va a los bloques y a la configuración del
@@ -94,14 +89,22 @@ por `escalar_a_recepcion` si se puede, y si no, dar el teléfono de recepción),
   necesita la herramienta `endCall`. Y a los asistentes nuevos Vapi les añade de oficio un respaldo de
   transcriptor que Diego no tiene.
 - `server.timeoutSeconds` vale **20 s** por defecto y, sin `backoffPlan`, **Vapi no reintenta**.
+- Los webhooks salen de **EE. UU.** (`cf-ipcountry: US` en la captura), y Upstash está en Irlanda. Para la
+  región de Vercel: cada herramienta hace varias órdenes a Redis y a Google, y cruzar el Atlántico una
+  vez (Vapi → Vercel en la UE) sale más barato que cruzarlo en cada orden. Se mide al desplegar.
 
 ---
 
 ### El contrato del webhook
-- Ruta del fixture con el POST real:
-- Fecha de captura:
-- Forma que llegó (`toolCallList` o `toolCalls`):
-- Ruta de los tipos generados y del test que falla si cambia:
+- Ruta del fixture con el POST real: `fixtures/vapi/2026-09-26-tool-calls.json` y
+  `fixtures/vapi/2026-09-26-end-of-call-report.json` (llamada `01a0dd8e-…` al asistente de pruebas).
+  Limpios: sin la credencial, sin las URL de la llamada (control, escucha, registro, grabación) y sin el túnel.
+- Fecha de captura: 26-sep-2026, 13:51–13:54.
+- Forma que llegó (`toolCallList` o `toolCalls`): **las dos, y además `toolWithToolCallList`**, con lo
+  mismo: `{ id, type: "function", function: { name, arguments } }` y **`arguments` como objeto**. Se lee
+  `message.toolCallList[].function`. Autorización: `Authorization: Bearer …` de la credencial, correcta.
+  El coste real: `message.cost` del `end-of-call-report` (0,2048 $ esta llamada; `message.call.cost` llega a 0).
+- Ruta de los tipos generados y del test que falla si cambia: *(pendiente: `src/vapi/contrato.ts`)*
 
 ### Los endpoints en Vercel
 | Herramienta | URL |

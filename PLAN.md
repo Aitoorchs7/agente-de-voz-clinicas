@@ -267,9 +267,9 @@ Vapi manda al `serverUrl` un POST con `message.type = "tool-calls"` y espera **e
 { "results": [ { "toolCallId": "...", "result": "..." } ] }
 ```
 
-> ⚠️ **Ojo con las plantillas del curso.** Usan `message.toolCalls[0].id` y `.function.arguments`. La documentación actual de Vapi usa **`toolCallList`**, con `id`, `name` y `arguments` directamente. Los flujos de n8n de `PAGO` siguen siendo válidos como **arquitectura**, pero las rutas de los campos hay que verificarlas contra un webhook real antes de dar nada por bueno. **Primera tarea de la fase 3: capturar un POST real y fijar el contrato.**
+> ✅ **El contrato, fijado con un POST real** (26-sep-2026, `fixtures/vapi/2026-09-26-tool-calls.json`). Vapi manda **las tres formas a la vez** en `message`: `toolCalls`, `toolCallList` y `toolWithToolCallList[].toolCall`, y las tres traen lo mismo: `{ id, type: "function", function: { name, arguments } }`, con **`arguments` ya como objeto** (no como texto JSON; en el historial de la llamada, `artifact.messages`, sí va como texto). Se lee **`message.toolCallList[].function`**; lo que diga la documentación de `parameters` sin `function` no es lo que llega. Las plantillas del curso (`toolCalls[0]`) funcionarían, pero solo con la primera herramienta si el modelo llama a dos a la vez. La respuesta que acepta Vapi: `{ results: [{ name, toolCallId, result }] }`. Los flujos de n8n de `PAGO` siguen siendo válidos como **arquitectura**.
 >
-> ⚠️ **Y la propia documentación de Vapi se contradice** (verificado el 25-sep-2026): `docs.vapi.ai/tools/custom-tools` usa `toolCallList[].function.arguments`; `docs.vapi.ai/server-url/events` usa `toolCallList[].parameters` —sin `function` y sin `arguments`— y además un segundo array, `toolWithToolCallList`. La plantilla del curso mezcla `toolCalls[0]` y `toolCallList[0]` en el mismo flujo. **La única fuente fiable es el POST real capturado en `fixtures/vapi/`**: la frase de arriba sobre `toolCallList` se reescribe con lo que diga ese fixture en cuanto se capture.
+> En el mismo `message` llegan `call` (con `id` y `type`: `webCall` o de teléfono), el `assistant` entero y `artifact` con la conversación hasta ese momento. En una llamada web **no hay `customer`**. El `end-of-call-report` trae el **coste real** en `message.cost` y `message.costBreakdown.total` (en `message.call.cost` llega a 0: es la foto del principio), la duración en `message.durationSeconds`, `startedAt`, `endedAt` y `endedReason`.
 
 ### El orquestador: dónde viven las herramientas propias
 
@@ -365,7 +365,7 @@ Cada fase termina en algo que se puede enseñar. Si una fase no se puede enseña
 | **Marca de tiempo en UTC** | Citas para ayer en las llamadas de noche | Filtro LiquidJS con `Europe/Madrid`. Prueba a las 00:30 |
 | **Dos llamadas, misma hora** | Doble reserva | Bloqueo temporal (fase 3) |
 | **Bundle regulatorio de Twilio** | Sin número no hay demo, y no depende de ti | Fase 0, día uno |
-| **Contrato del webhook** | `toolCalls` vs `toolCallList`: las plantillas del curso pueden no encajar | Capturar un POST real antes de escribir el manejador |
+| **Contrato del webhook** | `toolCalls` vs `toolCallList`: las plantillas del curso pueden no encajar | ✅ Capturado el 26-sep-2026 (`fixtures/vapi/`): se lee `toolCallList[].function`, con `arguments` como objeto |
 | **Sheets no se lee en llamada** | Un diseño que lo asuma se cae entero | Por eso existe el compilador. Está resuelto desde el principio |
 | **Notas sueltas en la hoja** | Google las cuenta como datos y desplaza columnas | Regla escrita para la clínica + rango de columnas cerrado al escribir |
 | **RGPD** | Grabar llamadas de pacientes son datos de salud | Aviso en el primer mensaje, contrato de encargado de tratamiento, retención corta. **Para la demo: números ficticios y nada real** |
