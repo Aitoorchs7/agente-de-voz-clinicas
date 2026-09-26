@@ -6,7 +6,7 @@ import { describe, expect, it } from "vitest";
 import { interpretarBloque, leerBloques, BLOQUES_OBLIGATORIOS } from "../src/compilador/bloques.js";
 import { herramientasNombradas } from "../src/compilador/publicar.js";
 import { ruta } from "../src/entorno.js";
-import { HERRAMIENTAS } from "../src/herramientas/definiciones.js";
+import { FRASE_PARA_COLGAR, HERRAMIENTAS } from "../src/herramientas/definiciones.js";
 
 const V1 = "C:/Users/chica/Desktop/Bot Clinica Demo V1/4 Agente";
 const hayV1 = existsSync(V1);
@@ -61,6 +61,14 @@ describe("todos los bloques", () => {
     }
     const todo = leerBloques().map((b) => b.cuerpo).join("\n");
     for (const n of propias) expect(todo).toContain(n);
+  });
+
+  it("la despedida del 20 acaba con la frase con la que Vapi cuelga (endCallPhrases)", () => {
+    const despedida = leerBloques().find((b) => b.orden === 20)!.cuerpo.split("\n").find((l) => l.includes("despídete corto y cuelga"))!;
+    expect(despedida.toLowerCase()).toContain(FRASE_PARA_COLGAR);
+    // Y no sale en ningún otro sitio del prompt: si no, colgaría a mitad de llamada.
+    const resto = leerBloques().map((b) => b.cuerpo).join("\n").toLowerCase().split(FRASE_PARA_COLGAR).length - 1;
+    expect(resto).toBe(1);
   });
 
   it("lo que salió mal en la llamada 1 no vuelve: ni {{customer.number}} ni teléfonos «separados por comas»", () => {

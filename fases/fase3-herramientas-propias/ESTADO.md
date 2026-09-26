@@ -9,30 +9,37 @@
 
 ## ⏳ Lo que necesito de ti ahora
 
-### La llamada 2 — las herramientas propias de verdad (lista desde el 26-sep, 14:55)
+### La llamada 3 — colgar a mitad de pedir la cita (lista desde el 26-sep, 15:20)
 
-- **A qué asistente:** **`PRUEBAS F3 · no usar en demos`**, con **Talk**. **No a Diego**, que sigue con
-  las nativas y sin tocar. El de pruebas ya **no tiene ninguna herramienta nativa**: solo
-  `consultar_huecos`, `anotar`, `crear_cita`, `escalar_a_recepcion` y colgar, con el prompt nuevo.
-- **El guion** (una sola llamada que prueba varias cosas; di los datos inventados que quieras):
-  1. *«Quería una limpieza para el martes que viene a las tres de la tarde.»* → Tiene que decirte que a
-     esa hora **la clínica está cerrada** (no «ocupada») y ofrecerte **una antes y otra después**: la una y
-     cuarto o las cuatro.
-  2. Elige **las cuatro**.
-  3. Di **nombre y apellidos en la misma frase**. → Te los repite y espera tu sí.
-  4. El teléfono: **tiene que pedírtelo**, sin ofrecerte «este mismo número».
-  5. Dale uno **con solo ocho cifras** a propósito. → Tiene que decirte que falta una y pedírtelo otra vez.
-  6. Dale las **nueve**. → Tiene que leértelo **en palabras, cifra a cifra**, sin decir «coma».
-  7. Confirma la cita. → «Queda apuntada».
-  8. Pregunta algo que no está en los datos, por ejemplo *«¿se puede pagar con Bizum?»*. → «Eso se lo
-     confirma recepción», y tiene que dejar el aviso.
-  9. Despídete y deja que cuelgue él.
-- **Qué compruebo yo después:** el orden de las herramientas y cuánto tardó cada una, el evento en
-  «Gabinete 1» (martes 29, de 16:00 a 16:45), las filas en `Citas`, `Escalados` y `Llamadas` (con el
-  resumen en español y el coste real), y que no dijo nada de lo de la llamada 1.
-- Va por el túnel hasta mi ordenador: cada herramienta tarda un poco más que en Vercel (Vapi llama desde
-  EE. UU.). El receptor está en marcha; si vas a llamar sin que yo esté, `npm run receptor` en una terminal.
-- Lo que cree es de prueba: lo borro después con `npm run limpiar-pruebas`, salvo que quieras verlo antes.
+- **A qué asistente:** el mismo, **`PRUEBAS F3 · no usar en demos`**, con **Talk**.
+- **El guion:**
+  1. *«Quería una revisión para el jueves que viene por la mañana.»* → Te ofrecerá dos horas.
+  2. Elige una.
+  3. Di nombre y apellidos.
+  4. Cuando te pida el teléfono, **cuelga tú, sin despedirte**, como si se hubiera cortado.
+- **Qué compruebo yo:** que la hora que te guardaba **queda libre en el acto** (no a los cuatro minutos),
+  que no hay evento ni fila en `Citas`, que la ficha de la llamada se ha borrado, y que la fila de
+  `Llamadas` dice «colgó quien llamaba».
+- Si te sobra un minuto, una **3 bis**: repite hasta el final, di «sí» a la confirmación y **cuelga en
+  el mismo segundo**. Es el caso más feo (la cita a medio crear cuando llega el aviso de que has colgado).
+  Tiene que quedar o todo (evento + fila en `Citas`) o nada.
+
+### La llamada 2 (26-sep, 15:06, `01a0ddd2-…`): bien, salvo que no colgó
+
+| Paso | Resultado |
+| --- | --- |
+| Limpieza el martes a las tres (cerrado de 14 a 16) | ✅ «A esa hora la clínica está cerrada»; ofreció la una y cuarto o las cuatro |
+| Nombre y apellidos a la vez | ✅ una sola herramienta; te los repitió |
+| Teléfono | ✅ **lo pidió**, sin ofrecer «este mismo número» |
+| Teléfono de ocho cifras | ✅ «le falta algún dígito, solo tiene ocho» |
+| Las nueve cifras | ✅ te lo leyó cifra a cifra, sin «coma» |
+| Cita creada | ✅ evento en «Gabinete 1» y fila en `Citas`; al colgar, fila en `Llamadas` con resumen en español y **coste real** (0,2489 $) |
+| Bizum | ✅ ofreció el aviso; dijiste que no, y no lo dejó (bien hecho) |
+| **Colgar** | ❌ **se despidió y no colgó**: 14 s de silencio hasta que colgaste tú. Arreglado: Vapi cuelga ahora en cuanto el bot dice «que vaya muy bien» (`endCallPhrases`), además de la herramienta de colgar |
+
+Tiempos de cada herramienta en el servidor: entre 0,5 y 1,9 s. Lo que tarda el bot en empezar a hablar
+después de que tú acabes (sobre todo al dictar números) es de turnos y endpointing: **Fase 4**.
+Datos de prueba borrados.
 
 ### Decidido el 26-sep-2026, tras la llamada 1
 

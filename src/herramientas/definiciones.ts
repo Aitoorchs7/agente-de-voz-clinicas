@@ -106,3 +106,10 @@ export const HERRAMIENTAS: readonly DefinicionFuncion[] = [
 
 /** `finalizar_llamada` sigue siendo nativa de Vapi (§6): una herramienta de tipo `endCall`. */
 export const HERRAMIENTA_COLGAR = { type: "endCall" } as const;
+
+/**
+ * Y además, cuelga Vapi en cuanto el bot dice esta frase (`endCallPhrases`), sin esperar a que el modelo
+ * llame a la herramienta: en la llamada 2 (26-sep) se despidió y no colgó, y hubo 14 s de silencio hasta
+ * que colgó el paciente. Es el final fijo de la despedida del bloque 20: una prueba lo comprueba.
+ */
+export const FRASE_PARA_COLGAR = "que vaya muy bien";

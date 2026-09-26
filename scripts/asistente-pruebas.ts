@@ -21,6 +21,7 @@ import { cargarFicha } from "../src/compilador/ciclo.js";
 import { herramientasNombradas } from "../src/compilador/publicar.js";
 import { compilarFicha } from "../src/compilador/render.js";
 import { leerFicha } from "../src/hoja/lector.js";
+import { FRASE_PARA_COLGAR } from "../src/herramientas/definiciones.js";
 import { idsPorNombre, sincronizarHerramientas } from "../src/herramientas/registro.js";
 import { clienteVapi, type Asistente } from "../src/vapi/cliente.js";
 
@@ -65,7 +66,10 @@ if (propias) {
   model.toolIds = [ids.consultar_huecos!, ids.anotar!, ids.crear_cita!, ids.escalar_a_recepcion!, ids.endCall!];
   const sinEnganchar = herramientasNombradas(c.prompt).filter((n) => !(n in ids));
   if (sinEnganchar.length) throw new Error(`El prompt nombra ${sinEnganchar.join(", ")}, que no está entre las herramientas propias.`);
-  Object.assign(cambios, { name: NOMBRE, model, firstMessage: c.firstMessage, endCallMessage: c.endCallMessage, voicemailMessage: c.voicemailMessage });
+  Object.assign(cambios, {
+    name: NOMBRE, model, firstMessage: c.firstMessage, endCallMessage: c.endCallMessage, voicemailMessage: c.voicemailMessage,
+    endCallPhrases: [FRASE_PARA_COLGAR],
+  });
 } else if (captura || !existente) {
   const ids = idsPorNombre(await sincronizarHerramientas(vapi));
   const model = structuredClone(diego.model!);
