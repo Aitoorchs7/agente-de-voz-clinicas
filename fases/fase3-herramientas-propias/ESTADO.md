@@ -9,20 +9,38 @@
 
 ## ⏳ Lo que necesito de ti ahora
 
-### La llamada 3 — colgar a mitad de pedir la cita (lista desde el 26-sep, 15:20)
+### Vercel Pro (lo siguiente: sin esto no hay llamadas 4 y 5)
 
-- **A qué asistente:** el mismo, **`PRUEBAS F3 · no usar en demos`**, con **Talk**.
-- **El guion:**
-  1. *«Quería una revisión para el jueves que viene por la mañana.»* → Te ofrecerá dos horas.
-  2. Elige una.
-  3. Di nombre y apellidos.
-  4. Cuando te pida el teléfono, **cuelga tú, sin despedirte**, como si se hubiera cortado.
-- **Qué compruebo yo:** que la hora que te guardaba **queda libre en el acto** (no a los cuatro minutos),
-  que no hay evento ni fila en `Citas`, que la ficha de la llamada se ha borrado, y que la fila de
-  `Llamadas` dice «colgó quien llamaba».
-- Si te sobra un minuto, una **3 bis**: repite hasta el final, di «sí» a la confirmación y **cuelga en
-  el mismo segundo**. Es el caso más feo (la cita a medio crear cuando llega el aviso de que has colgado).
-  Tiene que quedar o todo (evento + fila en `Citas`) o nada.
+Las llamadas 4 (dos a la vez, el entregable) y 5 (las 00:30) son **a Diego**, y Diego no puede depender
+de un túnel en mi ordenador. Decidido el 25-sep: Pro se contrata al final de la Fase 3, que es ahora.
+
+1. Entra en **vercel.com** con tu cuenta de GitHub (la del repositorio).
+2. Pasa a **Pro** (20 $ al mes por persona, con 20 $ de uso incluidos; el plan gratuito, Hobby, es
+   solo para uso personal no comercial).
+3. Crea un **token**: vercel.com/account/tokens → *Create Token* → que valga para ese equipo Pro →
+   caducidad de 90 días.
+4. Pégalo en el **`.env`**, en una línea nueva: `VERCEL_TOKEN=…`. **En el `.env`, no en la
+   conversación.**
+5. Avísame. Yo creo el proyecto, subo las variables secretas desde el `.env` sin que pasen por la
+   conversación, despliego, lo pruebo con la prueba de humo y **te pido el sí** antes de tocar a Diego.
+
+Mientras tanto preparo el cambio de Diego y su **marcha atrás** a las nativas, y la revisión de
+seguridad del webhook antes de exponerlo.
+
+*(Opcional, si te apetece antes: la **3 bis** — llega hasta el final, di «sí» a la confirmación y
+cuelga en el mismo segundo. Está cubierta por las pruebas, pero en real nunca sobra.)*
+
+### La llamada 3 (26-sep, 15:15, `01a0ddda-…`): colgar a mitad ✅
+
+| Qué | Resultado |
+| --- | --- |
+| Pediste las 11:00, que no estaba entre las ofrecidas | ✅ no la descartó: volvió a consultar esa hora exacta (regla de la V1) y te la guardó |
+| Hora, nombre y apellidos | ✅ en una sola herramienta |
+| Colgaste al pedirte el teléfono | ✅ al colgar: ficha y bloqueos borrados de Redis, sin evento, sin fila en `Citas` |
+| ¿Queda libre la hora? | ✅ **en el acto**: otra llamada pidió el jueves a las 11:00 justo después y le dijo «Libre» |
+| Fila en `Llamadas` | ✅ «colgó quien llamaba», coste real (0,1071 $) y el resumen: *«ha quedado sin resolver al interrumpirse el proceso antes de finalizar la reserva»* |
+
+Datos de prueba borrados.
 
 ### La llamada 2 (26-sep, 15:06, `01a0ddd2-…`): bien, salvo que no colgó
 
