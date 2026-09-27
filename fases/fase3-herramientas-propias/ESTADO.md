@@ -9,19 +9,40 @@
 
 ## ⏳ Lo que necesito de ti ahora
 
-### ¿Me das el sí para cambiar a Diego a las herramientas propias? (27-sep)
+### La llamada 4 — EL ENTREGABLE: dos llamadas a Diego a la vez (lista desde el 27-sep)
 
-Vercel Pro está desplegado y probado (abajo). Lo que haría al decirme que sí:
+**Diego ya tiene las herramientas propias** (cambiado el 27-sep con tu sí; ver abajo). Cualquier demo
+desde ahora usa el flujo nuevo. Marcha atrás: `npm run cambiar-diego -- --nativas`.
 
-1. Juntar la rama `fase3-bloques` con `main`.
-2. `npm run cambiar-diego -- --propias --url https://agente-de-voz-clinicas.vercel.app`: guarda a Diego
-   tal como está en `fichas/dentalvis/nativas.json` y le cambia **el prompt, las herramientas (solo las
-   cuatro propias y colgar), el servidor y la frase de colgar**, en un solo cambio comprobado campo a
-   campo. La voz, el modelo, la temperatura y los mensajes se quedan como están. **Ensayado en simulación
-   contra Vercel: cambiaría exactamente `model`, `server` y `endCallPhrases`.**
-3. Una prueba de humo contra Diego y te pido la **llamada 4**.
+- **A qué asistente:** **Diego** (panel de Vapi → Assistants → Diego → **Talk**), **dos veces a la vez**.
+- **Desde dos aparatos:** el ordenador y el móvil (en el móvil, dashboard.vapi.ai en el navegador,
+  Diego → Talk), con **auriculares en uno de los dos** para que un bot no oiga al otro. O con otra persona.
+- **El guion** (el mismo en las dos, con nombres y teléfonos inventados distintos):
+  1. Abre las dos llamadas y deja que acaben los dos saludos.
+  2. En las dos, **lo más a la vez que puedas** (cuenta hasta tres): *«Quería una limpieza para el jueves
+     uno de octubre a las diez de la mañana.»*
+  3. **Una tiene que decirte que a las diez está libre. La otra, que esa hora ya está cogida**, y
+     ofrecerte las nueve y cuarto o las once menos cuarto.
+  4. Termina las dos: en la primera, nombre, teléfono y confirmar; en la segunda, elige una de las dos
+     que te ofrece, nombre, teléfono y confirmar. Despídete y deja que cuelgue él.
+- **Si las dos te dicen que a las diez está libre, ese es justo el fallo que se prueba: dímelo.**
+- **Qué compruebo yo:** dos citas en «Gabinete 1» el jueves 1, **sin pisarse** (una a las 10:00 y la otra
+  a otra hora), dos filas en `Citas` y dos en `Llamadas` con su coste. Avísame cuando acabes: ya no hay
+  túnel en mi ordenador, así que lo miro en Vapi y en la hoja.
+- Las citas son de prueba: las borro después, salvo que quieras verlas.
 
-**Marcha atrás**, si en algún momento hace falta: `npm run cambiar-diego -- --nativas` (segundos).
+### Diego, cambiado a las herramientas propias (27-sep)
+
+- Rama `fase3-bloques` juntada con `main` (sin conflictos: avance directo). 257 pruebas en verde.
+- `npm run cambiar-diego -- --propias --url https://agente-de-voz-clinicas.vercel.app`: copia de Diego con
+  las nativas en `fichas/dentalvis/nativas.json` (sin claves: comprobado), y un solo PATCH comprobado.
+- Comprobado aparte con un GET: solo `consultar_huecos`, `anotar`, `crear_cita`, `escalar_a_recepcion` y
+  `endCall`; el mismo modelo (`gemini-3.5-flash`, 0,3); prompt nuevo (sin `google_` ni
+  `{{customer.number}}`); servidor en Vercel con 10 s y un reintento; `endCallPhrases`; **ningún otro
+  campo cambiado** respecto a la copia.
+- `npm run compilar -- --simular` → *«sin cambios: el asistente ya tiene esto»*: Diego y los bloques de
+  `main` coinciden.
+- Una petición con el asistente de Diego contra Vercel: ortodoncia en «Gabinete 2», bien.
 
 ### Vercel Pro: desplegado (27-sep)
 
@@ -47,9 +68,9 @@ Vercel Pro está desplegado y probado (abajo). Lo que haría al decirme que sí:
 | --- | --- | --- |
 | 1 | **Tú** | ✅ Vercel Pro + el token en el `.env` |
 | 2 | Yo | ✅ Proyecto creado, variables subidas, desplegado en Dublín, probado y el asistente de pruebas apuntando ahí |
-| 3 | **Tú** | ⏳ **Darme el sí** para cambiar a Diego (arriba) |
-| 4 | Yo | Juntar la rama `fase3-bloques` con `main` y cambiar a Diego a las propias |
-| 5 | **Tú** | **Llamada 4, la del entregable:** dos llamadas a Diego a la vez pidiendo la misma hora (el guion, aquí, cuando toque) |
+| 3 | **Tú** | ✅ El sí para cambiar a Diego |
+| 4 | Yo | ✅ Rama juntada con `main` y Diego con las propias |
+| 5 | **Tú** | ⏳ **Llamada 4, la del entregable:** dos llamadas a Diego a la vez pidiendo la misma hora (guion arriba) |
 | 6 | **Tú** | **Llamada 5:** una llamada real a Diego **entre las 00:30 y las 00:45** de una noche cualquiera |
 | 7 | Yo | Cerrar el ESTADO para la Fase 4 y dejarte el prompt de arranque de la Fase 4 listo para copiar |
 
