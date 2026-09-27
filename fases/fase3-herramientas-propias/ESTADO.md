@@ -9,27 +9,44 @@
 
 ## ⏳ Lo que necesito de ti ahora
 
-### La llamada 4 — EL ENTREGABLE: dos llamadas a Diego a la vez (lista desde el 27-sep)
+### La llamada 5 — la de las 00:30 (a DIEGO)
 
-**Diego ya tiene las herramientas propias** (cambiado el 27-sep con tu sí; ver abajo). Cualquier demo
-desde ahora usa el flujo nuevo. Marcha atrás: `npm run cambiar-diego -- --nativas`.
+- **Cuándo:** entre las **00:30 y las 00:45** de una noche cualquiera (hora de Madrid).
+- **A qué asistente:** **Diego** (panel de Vapi → Assistants → **Diego** → Talk). Ojo: la 4 fue por error
+  al de pruebas; esta tiene que ser a Diego, porque además es su primera llamada real con las propias.
+- **El guion:**
+  1. *«¿Qué día es hoy?»* → Tiene que decir **el día nuevo** (si llamas en la noche del domingo 27 al
+     lunes 28: «lunes veintiocho»), no el de antes de medianoche.
+  2. *«Quería una revisión para mañana por la mañana.»* → Tiene que ofrecerte horas del día **siguiente
+     al nuevo** (en ese ejemplo, el martes 29), no del lunes.
+  3. Elige una, da nombre y un teléfono inventados, confirma y deja que cuelgue él.
+- **Qué compruebo yo:** lo que dijo, y que en la hoja la fecha de creación de la cita y la de la llamada
+  son **00:3x del día nuevo** (en hora de la clínica), no las 22:3x del día anterior (que sería UTC).
+- Avísame al día siguiente; lo miro en Vapi y en la hoja, y lo borro después.
 
-- **A qué asistente:** **Diego** (panel de Vapi → Assistants → Diego → **Talk**), **dos veces a la vez**.
-- **Desde dos aparatos:** el ordenador y el móvil (en el móvil, dashboard.vapi.ai en el navegador,
-  Diego → Talk), con **auriculares en uno de los dos** para que un bot no oiga al otro. O con otra persona.
-- **El guion** (el mismo en las dos, con nombres y teléfonos inventados distintos):
-  1. Abre las dos llamadas y deja que acaben los dos saludos.
-  2. En las dos, **lo más a la vez que puedas** (cuenta hasta tres): *«Quería una limpieza para el jueves
-     uno de octubre a las diez de la mañana.»*
-  3. **Una tiene que decirte que a las diez está libre. La otra, que esa hora ya está cogida**, y
-     ofrecerte las nueve y cuarto o las once menos cuarto.
-  4. Termina las dos: en la primera, nombre, teléfono y confirmar; en la segunda, elige una de las dos
-     que te ofrece, nombre, teléfono y confirmar. Despídete y deja que cuelgue él.
-- **Si las dos te dicen que a las diez está libre, ese es justo el fallo que se prueba: dímelo.**
-- **Qué compruebo yo:** dos citas en «Gabinete 1» el jueves 1, **sin pisarse** (una a las 10:00 y la otra
-  a otra hora), dos filas en `Citas` y dos en `Llamadas` con su coste. Avísame cuando acabes: ya no hay
-  túnel en mi ordenador, así que lo miro en Vapi y en la hoja.
-- Las citas son de prueba: las borro después, salvo que quieras verlas.
+### La llamada 4 (27-sep, 13:52): EL ENTREGABLE ✅ — dos llamadas a la vez, una se lleva la hora
+
+| | Llamada A (`01a0e2b5-e538`) | Llamada B (`01a0e2b5-e625`) |
+| --- | --- | --- |
+| Empezó | 11:52:47.08 UTC | 11:52:47.22 UTC (**0,14 s después**) |
+| Pidió limpieza, jueves 1 de octubre, 10:00 | 11:53:09.4 | 11:53:14.6 |
+| Lo que contestó el servidor | **«Libre»** (y se la guardó) | **«Esa hora ya está cogida»** + *las nueve y cuarto o las once menos cuarto* |
+| Final | Cita creada a las 10:00 · colgó el bot | Colgó la persona |
+
+- **Una sola cita** en «Gabinete 1» (10:00–10:45), una fila en `Citas`, **dos** en `Llamadas` con su coste
+  real (0,1902 $ y 0,1897 $) y su resumen en español (la de B: *«quedó sin resolver al no haber
+  disponibilidad en ese horario»*). Al colgar, Redis limpio en las dos (las 9:15 y 10:45 que tenía B
+  reservadas, libres).
+- **Se cumple el criterio del entregable** (§8: *dos llamadas de verdad, simultáneas, pidiendo la misma
+  hora, y solo una se la lleva; la otra recibe alternativas en lenguaje natural*). No se repite.
+- **Fueron al asistente de pruebas, no a Diego.** Es la misma cadena (mismo servidor en Vercel, mismo
+  Redis, mismas herramientas, mismo prompt compilado de la misma hoja); lo que se probaba —el bloqueo
+  atómico— es idéntico. Diego tiene su llamada real en la 5.
+- **Lo que falló en B no es del sistema, y va a la Fase 4:** tras la respuesta, el bot de B estuvo 14 s
+  callado y luego empezó frases que se cortaban solas («Para…», «Para…», «Perdone, que se…»), justo
+  mientras hablaba el bot de A. Todo indica que el micrófono de B oía el altavoz de A y Vapi lo tomaba por
+  una interrupción. **Fase 4:** interrupciones y ruido de fondo (otra voz en la habitación).
+- Datos de prueba borrados.
 
 ### Diego, cambiado a las herramientas propias (27-sep)
 
@@ -70,8 +87,8 @@ desde ahora usa el flujo nuevo. Marcha atrás: `npm run cambiar-diego -- --nativ
 | 2 | Yo | ✅ Proyecto creado, variables subidas, desplegado en Dublín, probado y el asistente de pruebas apuntando ahí |
 | 3 | **Tú** | ✅ El sí para cambiar a Diego |
 | 4 | Yo | ✅ Rama juntada con `main` y Diego con las propias |
-| 5 | **Tú** | ⏳ **Llamada 4, la del entregable:** dos llamadas a Diego a la vez pidiendo la misma hora (guion arriba) |
-| 6 | **Tú** | **Llamada 5:** una llamada real a Diego **entre las 00:30 y las 00:45** de una noche cualquiera |
+| 5 | **Tú** | ✅ **Llamada 4, la del entregable** (27-sep): una se llevó la hora; la otra, «cogida» y dos alternativas |
+| 6 | **Tú** | ⏳ **Llamada 5:** una llamada real a **Diego** entre las 00:30 y las 00:45 (guion arriba) |
 | 7 | Yo | Cerrar el ESTADO para la Fase 4 y dejarte el prompt de arranque de la Fase 4 listo para copiar |
 
 Cuando estén la 4 y la 5, la fase está entregada y se puede pasar a la Fase 4.
@@ -225,8 +242,10 @@ Desplegar: `npx vercel deploy --prod --scope apolo4team` con `VERCEL_TOKEN` del 
 - **Cuánto tarda en caducar:** **4 minutos desde la última herramienta de la llamada** (cada herramienta
   lo renueva). Solo actúa si se pierde el aviso de fin de llamada; al colgar normalmente se suelta en el
   acto (llamada 3). ← la Fase 4 cuelga llamadas a mitad; va a chocar con esto
-- Resultado de la prueba de dos llamadas simultáneas: *(pendiente: llamada 4, a Diego en Vercel)*. Sin
-  red y contra Upstash: diez reservas a la vez del mismo hueco → una gana.
+- Resultado de la prueba de dos llamadas simultáneas: **✅ 27-sep, llamada 4**: dos llamadas que empezaron
+  con 0,14 s de diferencia pidieron la misma hora; una la obtuvo y la otra recibió «esa hora ya está
+  cogida» y dos alternativas. Una sola cita en el calendario. Sin red y contra Upstash: diez reservas a la
+  vez del mismo hueco → una gana.
 
 ### La pestaña `Llamadas`
 - ¿Se está rellenando con el **coste real** de cada llamada? **Sí** (desde el asistente de pruebas; en
