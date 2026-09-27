@@ -9,30 +9,45 @@
 
 ## ⏳ Lo que necesito de ti ahora
 
-### Vercel Pro (lo siguiente: sin esto no hay llamadas 4 y 5)
+### ¿Me das el sí para cambiar a Diego a las herramientas propias? (27-sep)
 
-Las llamadas 4 (dos a la vez, el entregable) y 5 (las 00:30) son **a Diego**, y Diego no puede depender
-de un túnel en mi ordenador. Decidido el 25-sep: Pro se contrata al final de la Fase 3, que es ahora.
+Vercel Pro está desplegado y probado (abajo). Lo que haría al decirme que sí:
 
-1. Entra en **vercel.com** con tu cuenta de GitHub (la del repositorio).
-2. Pasa a **Pro** (20 $ al mes por persona, con 20 $ de uso incluidos; el plan gratuito, Hobby, es
-   solo para uso personal no comercial).
-3. Crea un **token**: vercel.com/account/tokens → *Create Token* → que valga para ese equipo Pro →
-   caducidad de 90 días.
-4. Pégalo en el **`.env`**, en una línea nueva: `VERCEL_TOKEN=…`. **En el `.env`, no en la
-   conversación.**
-5. Avísame. Yo creo el proyecto, subo las variables secretas desde el `.env` sin que pasen por la
-   conversación, despliego, lo pruebo con la prueba de humo y **te pido el sí** antes de tocar a Diego.
+1. Juntar la rama `fase3-bloques` con `main`.
+2. `npm run cambiar-diego -- --propias --url https://agente-de-voz-clinicas.vercel.app`: guarda a Diego
+   tal como está en `fichas/dentalvis/nativas.json` y le cambia **el prompt, las herramientas (solo las
+   cuatro propias y colgar), el servidor y la frase de colgar**, en un solo cambio comprobado campo a
+   campo. La voz, el modelo, la temperatura y los mensajes se quedan como están. **Ensayado en simulación
+   contra Vercel: cambiaría exactamente `model`, `server` y `endCallPhrases`.**
+3. Una prueba de humo contra Diego y te pido la **llamada 4**.
 
-*(Ya preparado: el cambio de Diego y su **marcha atrás** a las nativas, `vercel.json` y `.vercelignore`.)*
+**Marcha atrás**, si en algún momento hace falta: `npm run cambiar-diego -- --nativas` (segundos).
+
+### Vercel Pro: desplegado (27-sep)
+
+- Equipo `apolo4team` (Pro), proyecto `agente-de-voz-clinicas`, región **Dublín** (junto a Upstash).
+- Las cinco variables secretas subidas por la API como **sensibles** y solo de producción, sin pasar por
+  la conversación: Upstash (2), secreto del webhook, Gemini y la cuenta de servicio en una línea.
+- Prueba de humo por HTTP contra Vercel: `consultar_huecos` 0,38 s · `anotar` 0,08 s · `crear_cita`
+  1,2–1,5 s · `escalar_a_recepcion` 0,7 s (la primera tras desplegar, ~1,1 s por el arranque en frío).
+  Con el túnel eran 1,4 · 0,25 · 1,8 · 1,3 s.
+- El asistente de pruebas ya apunta a Vercel: **se acabó el túnel** (no hace falta `npm run receptor`).
+- ⚠ **Lo que pasó y se corrigió:** el primer despliegue servía como públicos, en la dirección de
+  producción, el PLAN, los ESTADO, las fichas, los fixtures (con la transcripción ficticia de la llamada
+  1) y el código. **Nunca el `.env` ni las credenciales** (404). Visible unos minutos; corregido con
+  `outputDirectory: public` y una lista blanca en `.vercelignore`, y comprobado desde fuera: ahora todo
+  da 404 salvo `robots.txt` y el webhook (405 a GET, 401 sin credencial). Las direcciones propias de cada
+  despliegue están protegidas por Vercel (piden iniciar sesión).
+- Aviso conocido e inofensivo al compilar: `TS2688: Cannot find type definition file for 'node'` (Vercel
+  usa el TypeScript 7 del proyecto solo para traducir; la función funciona).
 
 ### Lo que queda de la fase, en orden (quién hace cada cosa)
 
 | # | Quién | Qué |
 | --- | --- | --- |
-| 1 | **Tú** | Vercel Pro + el token en el `.env` (los pasos de arriba) y avisarme |
-| 2 | Yo | Crear el proyecto, subir las variables secretas, desplegar en Dublín, revisión de seguridad, probarlo con peticiones de verdad y apuntar ahí el asistente de pruebas (adiós al túnel) |
-| 3 | **Tú** | Darme el **sí** para cambiar a Diego (te lo pido aquí, con la marcha atrás lista) |
+| 1 | **Tú** | ✅ Vercel Pro + el token en el `.env` |
+| 2 | Yo | ✅ Proyecto creado, variables subidas, desplegado en Dublín, probado y el asistente de pruebas apuntando ahí |
+| 3 | **Tú** | ⏳ **Darme el sí** para cambiar a Diego (arriba) |
 | 4 | Yo | Juntar la rama `fase3-bloques` con `main` y cambiar a Diego a las propias |
 | 5 | **Tú** | **Llamada 4, la del entregable:** dos llamadas a Diego a la vez pidiendo la misma hora (el guion, aquí, cuando toque) |
 | 6 | **Tú** | **Llamada 5:** una llamada real a Diego **entre las 00:30 y las 00:45** de una noche cualquiera |
@@ -148,13 +163,17 @@ por `escalar_a_recepcion` si se puede, y si no, dar el teléfono de recepción),
   `arguments` deja de ser un objeto o si el coste deja de estar en `message.cost`).
 
 ### Los endpoints en Vercel
+Un solo endpoint para todo (decidido el 25-sep): **`https://agente-de-voz-clinicas.vercel.app/api/vapi`**
+(`api/vapi.ts` → `src/vapi/webhook.ts`), que reparte por `message.type` y, en `tool-calls`, por el nombre
+de la herramienta. Credencial `bearer` de Vapi; sin ella, 401.
 | Herramienta | URL |
 | --- | --- |
-| `consultar_huecos` | |
-| `anotar` | |
-| `crear_cita` | |
-| `escalar_a_recepcion` | |
-| `end-of-call-report` | |
+| `consultar_huecos` | `https://agente-de-voz-clinicas.vercel.app/api/vapi` |
+| `anotar` | `https://agente-de-voz-clinicas.vercel.app/api/vapi` |
+| `crear_cita` | `https://agente-de-voz-clinicas.vercel.app/api/vapi` |
+| `escalar_a_recepcion` | `https://agente-de-voz-clinicas.vercel.app/api/vapi` |
+| `end-of-call-report` | `https://agente-de-voz-clinicas.vercel.app/api/vapi` |
+Desplegar: `npx vercel deploy --prod --scope apolo4team` con `VERCEL_TOKEN` del `.env` (`--token`).
 
 ### Cómo se declaran las herramientas en el asistente
 - Las cuatro propias (`consultar_huecos`, `anotar`, `crear_cita`, `escalar_a_recepcion`) y la de colgar
