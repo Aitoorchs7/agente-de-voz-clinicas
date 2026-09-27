@@ -1,6 +1,7 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "regions": ["dub1"],
+  "outputDirectory": "public",
   "functions": {
     "api/vapi.ts": {
       "maxDuration": 30,

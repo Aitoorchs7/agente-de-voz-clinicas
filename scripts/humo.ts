@@ -5,6 +5,7 @@
 //
 //   npm run humo              (la cita va a un martes de dentro de unas semanas, a las 13:00)
 //   npm run humo -- --dejar   (no borra: para mirar el evento y las filas a mano)
+//   npm run humo -- --url https://agente-de-voz-clinicas.vercel.app   (lo mismo, pero por HTTP contra ese servidor)
 
 import { randomUUID } from "node:crypto";
 import { hoy, sumarDias, diaDeLaSemana } from "../src/agenda/tiempo.js";
@@ -15,10 +16,16 @@ import { atender } from "../src/vapi/webhook.js";
 import { limpiarLlamadas } from "./limpiar-pruebas.js";
 
 const dejar = process.argv.includes("--dejar");
+const url = process.argv.includes("--url") ? process.argv[process.argv.indexOf("--url") + 1] : undefined;
 const asistente = cargarFicha("dentalvis-pruebas").assistantId;
 const llamada = `prueba-humo-${randomUUID()}`;
 const secreto = variableObligatoria("VAPI_WEBHOOK_SECRET");
-const dep = dependenciasDeVerdad();
+const dep = url ? null : dependenciasDeVerdad();
+/** Al webhook local (en proceso) o, con --url, al servidor de verdad por HTTP. */
+const enviar = (cuerpo: unknown): Promise<Response> => {
+  const init = { method: "POST", headers: { authorization: `Bearer ${secreto}`, "content-type": "application/json" }, body: JSON.stringify(cuerpo) };
+  return url ? fetch(`${url.replace(/\/+$/, "")}/api/vapi`, init) : atender(new Request("http://localhost/api/vapi", init), dep!);
+};
 
 let fecha = sumarDias(hoy("Europe/Madrid"), 21);
 while (diaDeLaSemana(fecha) !== "martes") fecha = sumarDias(fecha, 1);
@@ -28,7 +35,7 @@ let n = 0;
 async function herramienta(nombre: string, argumentos: Record<string, unknown>): Promise<string> {
   const cuerpo = { message: { type: "tool-calls", call, toolCallList: [{ id: `humo_${++n}`, type: "function", function: { name: nombre, arguments: argumentos } }] } };
   const empieza = Date.now();
-  const r = await atender(new Request("http://localhost/api/vapi", { method: "POST", headers: { authorization: `Bearer ${secreto}` }, body: JSON.stringify(cuerpo) }), dep);
+  const r = await enviar(cuerpo);
   const j = (await r.json()) as { results: { result: string }[] };
   console.log(`\n▶ ${nombre} ${JSON.stringify(argumentos)} — ${Date.now() - empieza} ms\n  ${j.results[0]!.result}`);
   return j.results[0]!.result;
@@ -49,7 +56,7 @@ try {
     },
   };
   const empieza = Date.now();
-  const r = await atender(new Request("http://localhost/api/vapi", { method: "POST", headers: { authorization: `Bearer ${secreto}` }, body: JSON.stringify(informe) }), dep);
+  const r = await enviar(informe);
   console.log(`\n▶ end-of-call-report — ${r.status} en ${Date.now() - empieza} ms`);
 
   const quedo = await limpiarLlamadas("dentalvis", [llamada], false);

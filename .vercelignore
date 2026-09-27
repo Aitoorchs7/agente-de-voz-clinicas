@@ -1,14 +1,14 @@
-# Lo que NUNCA se sube a Vercel al desplegar desde esta carpeta. Las claves van como variables de
-# entorno del proyecto, no como ficheros.
-.env
-.env.*
-credenciales/
-*-service-account.json
-*.pem
-*.p12
-*.key
-registro/
-*.log
-.claude/
-node_modules/
-coverage/
+# Qué se sube a Vercel al desplegar desde esta carpeta: SOLO lo que necesita la función del webhook.
+# Todo lo demás (el plan, los ESTADO, los fixtures, las pruebas, los bloques, el .env, las credenciales,
+# el registro) se queda aquí. El 27-sep, antes de esta lista, Vercel servía como públicos el PLAN, las
+# fichas y los fixtures en la dirección de producción: además de no subirlos, `vercel.json` dice que lo
+# único público es `public/` (un robots.txt).
+/*
+!api
+!src
+!fichas
+!public
+!package.json
+!package-lock.json
+!tsconfig.json
+!vercel.json
