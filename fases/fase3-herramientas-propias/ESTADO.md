@@ -24,11 +24,24 @@ de un túnel en mi ordenador. Decidido el 25-sep: Pro se contrata al final de la
 5. Avísame. Yo creo el proyecto, subo las variables secretas desde el `.env` sin que pasen por la
    conversación, despliego, lo pruebo con la prueba de humo y **te pido el sí** antes de tocar a Diego.
 
-Mientras tanto preparo el cambio de Diego y su **marcha atrás** a las nativas, y la revisión de
-seguridad del webhook antes de exponerlo.
+*(Ya preparado: el cambio de Diego y su **marcha atrás** a las nativas, `vercel.json` y `.vercelignore`.)*
 
-*(Opcional, si te apetece antes: la **3 bis** — llega hasta el final, di «sí» a la confirmación y
-cuelga en el mismo segundo. Está cubierta por las pruebas, pero en real nunca sobra.)*
+### Lo que queda de la fase, en orden (quién hace cada cosa)
+
+| # | Quién | Qué |
+| --- | --- | --- |
+| 1 | **Tú** | Vercel Pro + el token en el `.env` (los pasos de arriba) y avisarme |
+| 2 | Yo | Crear el proyecto, subir las variables secretas, desplegar en Dublín, revisión de seguridad, probarlo con peticiones de verdad y apuntar ahí el asistente de pruebas (adiós al túnel) |
+| 3 | **Tú** | Darme el **sí** para cambiar a Diego (te lo pido aquí, con la marcha atrás lista) |
+| 4 | Yo | Juntar la rama `fase3-bloques` con `main` y cambiar a Diego a las propias |
+| 5 | **Tú** | **Llamada 4, la del entregable:** dos llamadas a Diego a la vez pidiendo la misma hora (el guion, aquí, cuando toque) |
+| 6 | **Tú** | **Llamada 5:** una llamada real a Diego **entre las 00:30 y las 00:45** de una noche cualquiera |
+| 7 | Yo | Cerrar el ESTADO para la Fase 4 y dejarte el prompt de arranque de la Fase 4 listo para copiar |
+
+Cuando estén la 4 y la 5, la fase está entregada y se puede pasar a la Fase 4.
+
+*(Opcional: la **3 bis** — llegar hasta el final, decir «sí» a la confirmación y colgar en el mismo
+segundo. Está cubierta por las pruebas; mejor hacerla ya en Vercel, sin túnel.)*
 
 ### La llamada 3 (26-sep, 15:15, `01a0ddda-…`): colgar a mitad ✅
 
