@@ -1,28 +1,37 @@
 # ESTADO — Fase 3: Las herramientas propias
 
-> **ESTADO: EN CURSO** (arrancada el 25-sep-2026). Todavía no es un traspaso.
+> **ESTADO: ENTREGADA** (27-sep-2026, llamada 4: dos llamadas a la vez sin pisarse), **salvo la prueba
+> de las 00:30**, programada por el humano para el **sábado 3-oct-2026 a las 00:30** (guion abajo). La
+> revisa el agente de la Fase 3, no el de la 4.
 >
-> Si eres el agente de la Fase 4 y encuentras este fichero así, **para y dilo**: tu punto de partida no
-> existe todavía. No supongas lo que habría aquí ni lo reconstruyas leyendo el código — pregunta al humano.
+> **Si eres el agente de la Fase 4: este fichero ya es tu punto de partida.** Puedes empezar. Lo único
+> pendiente es esa llamada, que no depende de ti; no toques la hora de la clínica ni las fechas que se
+> escriben en la hoja (`src/agenda/tiempo.ts`, `fecha_creacion`, `Llamadas.fecha`) hasta que esté hecha.
+
+Fecha de cierre: 30-sep-2026 (entregada el 27-sep; queda la llamada de las 00:30 del 3-oct)
+Quién lo cierra: el agente de la Fase 3
 
 ---
 
 ## ⏳ Lo que necesito de ti ahora
 
-### La llamada 5 — la de las 00:30 (a DIEGO)
+### La llamada 5 — la de las 00:30, a DIEGO: **sábado 3 de octubre, entre las 00:30 y las 00:45**
 
-- **Cuándo:** entre las **00:30 y las 00:45** de una noche cualquiera (hora de Madrid).
+(Es decir, la noche del viernes 2 al sábado 3, hora de Madrid. Aplazada por el humano el 30-sep.)
+
 - **A qué asistente:** **Diego** (panel de Vapi → Assistants → **Diego** → Talk). Ojo: la 4 fue por error
   al de pruebas; esta tiene que ser a Diego, porque además es su primera llamada real con las propias.
 - **El guion:**
-  1. *«¿Qué día es hoy?»* → Tiene que decir **el día nuevo** (si llamas en la noche del domingo 27 al
-     lunes 28: «lunes veintiocho»), no el de antes de medianoche.
-  2. *«Quería una revisión para mañana por la mañana.»* → Tiene que ofrecerte horas del día **siguiente
-     al nuevo** (en ese ejemplo, el martes 29), no del lunes.
+  1. *«¿Qué día es hoy?»* → Tiene que decir **«sábado tres de octubre»**. Un bot que mirase la hora en
+     UTC (las 22:30 del viernes) diría «viernes dos»: ese es el fallo que se busca.
+  2. *«Quería una revisión para hoy por la mañana.»* → Tiene que ofrecerte horas del **sábado 3** (abre
+     de 9 a 14), no del viernes.
   3. Elige una, da nombre y un teléfono inventados, confirma y deja que cuelgue él.
+  4. *(Si te apetece, antes de confirmar:* *«¿y mañana?»* → mañana es domingo: tiene que decirte que **está
+     cerrado** y ofrecerte el lunes 5.)
 - **Qué compruebo yo:** lo que dijo, y que en la hoja la fecha de creación de la cita y la de la llamada
-  son **00:3x del día nuevo** (en hora de la clínica), no las 22:3x del día anterior (que sería UTC).
-- Avísame al día siguiente; lo miro en Vapi y en la hoja, y lo borro después.
+  son **2026-10-03 00:3x** (hora de la clínica), no **2026-10-02 22:3x** (que sería UTC).
+- Avísame después; lo miro en Vapi y en la hoja, lo borro y cierro este fichero del todo.
 
 ### La llamada 4 (27-sep, 13:52): EL ENTREGABLE ✅ — dos llamadas a la vez, una se lleva la hora
 
@@ -88,10 +97,10 @@
 | 3 | **Tú** | ✅ El sí para cambiar a Diego |
 | 4 | Yo | ✅ Rama juntada con `main` y Diego con las propias |
 | 5 | **Tú** | ✅ **Llamada 4, la del entregable** (27-sep): una se llevó la hora; la otra, «cogida» y dos alternativas |
-| 6 | **Tú** | ⏳ **Llamada 5:** una llamada real a **Diego** entre las 00:30 y las 00:45 (guion arriba) |
-| 7 | Yo | Cerrar el ESTADO para la Fase 4 y dejarte el prompt de arranque de la Fase 4 listo para copiar |
+| 6 | **Tú** | ⏳ **Llamada 5:** a **Diego**, el **sábado 3-oct entre las 00:30 y las 00:45** (guion arriba) |
+| 7 | Yo | ✅ ESTADO cerrado como traspaso y prompt de arranque de la Fase 4 entregado (30-sep). Tras la llamada 5: revisarla y cerrar lo de las 00:30 |
 
-Cuando estén la 4 y la 5, la fase está entregada y se puede pasar a la Fase 4.
+La 4 (el entregable) ya está: la Fase 4 puede empezar. La 5 se hace el sábado y la revisa la Fase 3.
 
 *(Opcional: la **3 bis** — llegar hasta el final, decir «sí» a la confirmación y colgar en el mismo
 segundo. Está cubierta por las pruebas; mejor hacerla ya en Vercel, sin túnel.)*
@@ -254,8 +263,10 @@ Desplegar: `npx vercel deploy --prod --scope apolo4team` con `VERCEL_TOKEN` del 
   (Gemini `gemini-3.1-flash-lite`) y la transcripción. Una fila por llamada (`id_llamada`).
 
 ### La prueba de las 00:30
-- Fecha y hora reales de la llamada:
-- Resultado:
+- Fecha y hora reales de la llamada: *(pendiente: programada para el sábado 3-oct-2026, 00:30–00:45)*
+- Resultado: *(pendiente)*. Lo que ya está probado sin llamada: la conversión a la hora de la clínica
+  minuto a minuto de 23:00 a 01:00 y en los dos cambios de hora de 2026 (`tests/tiempo.test.ts`), y todas
+  las fechas que se escriben en la hoja salen de `enZona(…, zona_horaria)`.
 
 ---
 

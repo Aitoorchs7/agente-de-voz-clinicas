@@ -185,7 +185,7 @@ El prompt no se escribe de una pieza. Son archivos numerados en `contenido/bloqu
 | `40 - Cuando cuesta entenderse` | Dicción, cobertura, nombres raros |
 | `50 - Como coge una cita` | El flujo, paso a paso |
 | `60 - Cuando pasa a una persona` | Escalado |
-| `70 - Antes de colgar` | **Provisional**: apuntar la llamada con la herramienta nativa de Sheets. Lo retira la Fase 3 cuando el `end-of-call-report` escriba en `Llamadas` |
+| ~~`70 - Antes de colgar`~~ | **Retirado por la Fase 3 el 26-sep-2026.** Apuntaba la llamada con la herramienta nativa de Sheets; ahora la fila de `Llamadas` la escribe el `end-of-call-report`, con el coste real |
 | `90 - Lo que sabe` | Solo huecos: `{{datos}}`, `{{tratamientos}}`, `{{faq}}`, `{{horario}}` |
 
 Y fuera del prompt, en el mismo `PATCH`: el **saludo** (`firstMessage`), la **despedida** (`endCallMessage`) y el **buzón** (`voicemailMessage`), que llevan el nombre del bot y de la clínica y salen de plantillas con los mismos huecos. Si solo se compilara el prompt, cambiar `nombre_bot` en la hoja dejaría al bot saludando con el nombre viejo.
@@ -198,7 +198,7 @@ Se escriben con dobles llaves y los rellena el compilador desde la hoja. Vapi us
 | --- | --- | --- |
 | `{{clinica}}`, `{{bot}}`, `{{trato}}`, `{{privacidad}}` | **Compilador** | Valores de `Config` |
 | `{{datos}}`, `{{tratamientos}}`, `{{faq}}`, `{{horario}}` | **Compilador** | Solo las filas `público = sí` |
-| `{{hoja_id}}` | **Compilador** | El `spreadsheetId` de la ficha (lo usa el bloque `70`, provisional) |
+| ~~`{{hoja_id}}`~~ | — | **Retirado por la Fase 3 el 26-sep-2026**, con el bloque `70`: el prompt ya no lleva la hoja |
 | `{{ahora}}`, `{{dia_semana}}` | **Compilador → Vapi** | El compilador los convierte en el filtro de fecha de Vapi con la zona horaria de `Config`; Vapi los resuelve en cada llamada |
 | `{{now}}`, `{{date}}`, `{{customer.number}}` | **Vapi**, en la llamada | Fecha/hora reales y el número del paciente. ⚠ **Si no hay número** (llamada web, número oculto), Vapi deja el texto `{{customer.number}}` tal cual: el prompt tiene que enseñarle al modelo a distinguirlo |
 

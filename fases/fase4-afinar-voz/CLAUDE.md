@@ -69,10 +69,13 @@ De la **Fase 3** necesitas (está en `fases/fase3-herramientas-propias/ESTADO.md
   cuelgues a mitad de agendar.
 - El `end-of-call-report` escribiendo en la pestaña `Llamadas` con resumen, transcripción, duración
   y **coste**.
-- El contrato del webhook fijado y la prueba de las 00:30 pasada.
+- El contrato del webhook fijado y la prueba de las 00:30 pasada. *(A 30-sep-2026: la de las 00:30 está
+  programada para el 3-oct y la revisa la Fase 3; no bloquea esta fase.)*
 
 De la **Fase 2**: el compilador, los nueve bloques en `contenido/bloques/` y el disparo manual.
-De la **Fase 1**: el número español de Twilio en marcha, la voz elegida y el modelo verificado.
+De la **Fase 1**: la voz elegida y el modelo verificado. *(El número español de Twilio está **en pausa
+por decisión del humano**: la prueba por teléfono se hace al final. Hasta entonces, las llamadas son
+web.)*
 
 **Prerrequisito de sentido común:** esta fase no se empieza hasta que las herramientas propias
 funcionan. Afinar la voz de un sistema que aún cambia por debajo es tirar las pruebas a la basura.
@@ -93,15 +96,20 @@ funcionan. Afinar la voz de un sistema que aún cambia por debajo es tirar las p
    esté cogida. Y "cerrado" y "ocupado" son cosas distintas: el paciente nota la diferencia.»*
    Con gente de verdad esto sale enseguida: alguien pedirá una hora que el bot no ofreció.
 
-4. **`anotar` valida un dato cada vez, y el bot nunca completa por su cuenta** (§6). *«Si vuelve con
+4. **`anotar` valida en el momento lo que el paciente acaba de decir, y el bot nunca completa por su
+   cuenta** (§6; desde el 26-sep-2026 acepta varios datos a la vez —nombre y apellidos juntos— y el
+   tratamiento y el día los apunta `consultar_huecos`: cada herramienta es un turno del modelo con su
+   «un segundo», y cuatro seguidas eran trece segundos de espera). *«Si vuelve con
    un problema —un teléfono de ocho dígitos, un nombre que no se entiende— el bot lo pide otra vez
    explicando qué pasa: "creo que falta un número, ¿me lo repite?". Nunca lo apunta a medias y nunca
    lo completa él.»* Si en tus pruebas el bot **adivina** un apellido que no entendió, eso es un
    fallo de la fase, no una tolerancia aceptable.
 
-5. **El teléfono se oye, no se tiene escrito** (§5). Llega por `{{customer.number}}`, pero si el
-   paciente da otro hay que **repetirlo dígito a dígito para confirmar**. Pruébalo con gente que dé
-   un número distinto del que llama: es el caso más realista y el que más falla.
+5. **El teléfono se oye, no se tiene escrito** (§5). Si la llamada trae número, **`anotar` se lo dice
+   al bot en su respuesta** (desde la Fase 3 el prompt ya no lleva `{{customer.number}}`: con él, el bot
+   ofrecía «este mismo número» en llamadas web sin número). Si el paciente da otro, `anotar` devuelve
+   las cifras **en palabras** y el bot las repite así para confirmar. Pruébalo con gente que dé un
+   número distinto del que llama: es el caso más realista y el que más falla.
 
 6. **Es una llamada, no un chat** (§5): números en palabras, nada de emojis ni listas, y la
    confirmación final **es una frase**: *«Entonces le apunto para el jueves veinticuatro a las diez,
