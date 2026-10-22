@@ -1,37 +1,25 @@
 # ESTADO — Fase 3: Las herramientas propias
 
-> **ESTADO: ENTREGADA** (27-sep-2026, llamada 4: dos llamadas a la vez sin pisarse), **salvo la prueba
-> de las 00:30**, programada por el humano para el **sábado 3-oct-2026 a las 00:30** (guion abajo). La
-> revisa el agente de la Fase 3, no el de la 4.
+> **ESTADO: ENTREGADA** (27-sep-2026, llamada 4: dos llamadas a la vez sin pisarse). **Cerrada del todo
+> el 22-oct-2026.** La prueba de las 00:30 quedó **SALTADA por decisión del humano** (ver abajo): no se
+> hizo y no se va a hacer en esta fase.
 >
-> **Si eres el agente de la Fase 4: este fichero ya es tu punto de partida.** Puedes empezar. Lo único
-> pendiente es esa llamada, que no depende de ti; no toques la hora de la clínica ni las fechas que se
-> escriben en la hoja (`src/agenda/tiempo.ts`, `fecha_creacion`, `Llamadas.fecha`) hasta que esté hecha.
+> **Si eres el agente de la Fase 4: este fichero es tu punto de partida y no queda nada pendiente de la
+> Fase 3.** Puedes tocar la hora de la clínica y las fechas que se escriben en la hoja
+> (`src/agenda/tiempo.ts`, `fecha_creacion`, `Llamadas.fecha`) si lo necesitas.
 
-Fecha de cierre: 30-sep-2026 (entregada el 27-sep; queda la llamada de las 00:30 del 3-oct)
+Fecha de cierre: 22-oct-2026 (entregada el 27-sep; traspaso el 30-sep; cerrada sin la llamada de las 00:30)
 Quién lo cierra: el agente de la Fase 3
 
 ---
 
-## ⏳ Lo que necesito de ti ahora
+## Nada pendiente
 
-### La llamada 5 — la de las 00:30, a DIEGO: **sábado 3 de octubre, entre las 00:30 y las 00:45**
+### La llamada 5 (la de las 00:30): SALTADA por decisión del humano (22-oct-2026)
 
-(Es decir, la noche del viernes 2 al sábado 3, hora de Madrid. Aplazada por el humano el 30-sep.)
-
-- **A qué asistente:** **Diego** (panel de Vapi → Assistants → **Diego** → Talk). Ojo: la 4 fue por error
-  al de pruebas; esta tiene que ser a Diego, porque además es su primera llamada real con las propias.
-- **El guion:**
-  1. *«¿Qué día es hoy?»* → Tiene que decir **«sábado tres de octubre»**. Un bot que mirase la hora en
-     UTC (las 22:30 del viernes) diría «viernes dos»: ese es el fallo que se busca.
-  2. *«Quería una revisión para hoy por la mañana.»* → Tiene que ofrecerte horas del **sábado 3** (abre
-     de 9 a 14), no del viernes.
-  3. Elige una, da nombre y un teléfono inventados, confirma y deja que cuelgue él.
-  4. *(Si te apetece, antes de confirmar:* *«¿y mañana?»* → mañana es domingo: tiene que decirte que **está
-     cerrado** y ofrecerte el lunes 5.)
-- **Qué compruebo yo:** lo que dijo, y que en la hoja la fecha de creación de la cita y la de la llamada
-  son **2026-10-03 00:3x** (hora de la clínica), no **2026-10-02 22:3x** (que sería UTC).
-- Avísame después; lo miro en Vapi y en la hoja, lo borro y cierro este fichero del todo.
+Se aplazó desde el 30-sep tres semanas seguidas porque el humano no puede estar despierto a esa hora, y
+decidió no seguir bloqueando la Fase 4 por ella. **No se hizo y no se va a hacer en esta fase.** Lo que
+sí está y lo que no, en «La prueba de las 00:30», más abajo.
 
 ### La llamada 4 (27-sep, 13:52): EL ENTREGABLE ✅ — dos llamadas a la vez, una se lleva la hora
 
@@ -97,10 +85,10 @@ Quién lo cierra: el agente de la Fase 3
 | 3 | **Tú** | ✅ El sí para cambiar a Diego |
 | 4 | Yo | ✅ Rama juntada con `main` y Diego con las propias |
 | 5 | **Tú** | ✅ **Llamada 4, la del entregable** (27-sep): una se llevó la hora; la otra, «cogida» y dos alternativas |
-| 6 | **Tú** | ⏳ **Llamada 5:** a **Diego**, el **sábado 3-oct entre las 00:30 y las 00:45** (guion arriba) |
-| 7 | Yo | ✅ ESTADO cerrado como traspaso y prompt de arranque de la Fase 4 entregado (30-sep). Tras la llamada 5: revisarla y cerrar lo de las 00:30 |
+| 6 | **Tú** | ⛔ **Llamada 5 (00:30): saltada** por decisión del humano el 22-oct-2026 |
+| 7 | Yo | ✅ ESTADO cerrado como traspaso y prompt de arranque de la Fase 4 entregado (30-sep); cerrado del todo el 22-oct |
 
-La 4 (el entregable) ya está: la Fase 4 puede empezar. La 5 se hace el sábado y la revisa la Fase 3.
+La 4 (el entregable) está hecha. La 5 se saltó por decisión del humano. La fase está cerrada.
 
 *(Opcional: la **3 bis** — llegar hasta el final, decir «sí» a la confirmación y colgar en el mismo
 segundo. Está cubierta por las pruebas; mejor hacerla ya en Vercel, sin túnel.)*
@@ -263,10 +251,20 @@ Desplegar: `npx vercel deploy --prod --scope apolo4team` con `VERCEL_TOKEN` del 
   (Gemini `gemini-3.1-flash-lite`) y la transcripción. Una fila por llamada (`id_llamada`).
 
 ### La prueba de las 00:30
-- Fecha y hora reales de la llamada: *(pendiente: programada para el sábado 3-oct-2026, 00:30–00:45)*
-- Resultado: *(pendiente)*. Lo que ya está probado sin llamada: la conversión a la hora de la clínica
-  minuto a minuto de 23:00 a 01:00 y en los dos cambios de hora de 2026 (`tests/tiempo.test.ts`), y todas
-  las fechas que se escriben en la hoja salen de `enZona(…, zona_horaria)`.
+- Fecha y hora reales de la llamada: **ninguna. SALTADA por decisión del humano el 22-oct-2026**, tras tres
+  semanas aplazada (programada primero para el 3-oct). No se hizo y no se va a hacer en esta fase.
+- Resultado: **la conversión a la hora de la clínica SÍ está verificada, pero solo con pruebas
+  automáticas**, nunca con una llamada real a Diego: `tests/tiempo.test.ts` recorre la franja de las
+  23:00 a la 01:00 **minuto a minuto** y los **dos cambios de hora de 2026** (29-mar y 25-oct), y todas
+  las fechas que se escriben en la hoja (`Citas.fecha_creacion`, `Llamadas.fecha`, `Escalados.fecha`)
+  salen de `enZona(…, zona_horaria)`. Lo que NO está comprobado es el conjunto en una llamada de
+  madrugada: lo que dice el bot de «hoy» y «mañana» (sale de `{{ahora}}` y `{{dia_semana}}`, que
+  resuelve Vapi) y lo que acaba escrito.
+
+### Riesgos pendientes para la Fase 5
+- **La lógica de fecha/hora nunca se ha verificado con una llamada real de madrugada; si en el futuro se
+  quiere cerrar esto, la forma más barata es colar una llamada a esa hora dentro de la ronda de personas
+  de la Fase 4, no montar una prueba aparte.**
 
 ---
 

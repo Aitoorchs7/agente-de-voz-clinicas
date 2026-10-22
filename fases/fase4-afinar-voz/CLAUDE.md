@@ -69,8 +69,10 @@ De la **Fase 3** necesitas (está en `fases/fase3-herramientas-propias/ESTADO.md
   cuelgues a mitad de agendar.
 - El `end-of-call-report` escribiendo en la pestaña `Llamadas` con resumen, transcripción, duración
   y **coste**.
-- El contrato del webhook fijado y la prueba de las 00:30 pasada. *(A 30-sep-2026: la de las 00:30 está
-  programada para el 3-oct y la revisa la Fase 3; no bloquea esta fase.)*
+- El contrato del webhook fijado y la prueba de las 00:30 pasada. *(La de las 00:30 quedó **saltada por
+  decisión del humano el 22-oct-2026**: la hora está verificada solo con pruebas automáticas, nunca con
+  una llamada real de madrugada. Si quieres cerrarlo, lo más barato es colar una llamada a esa hora en
+  tu ronda de personas. Nada de la Fase 3 te impide tocar `src/agenda/tiempo.ts` ni las fechas.)*
 
 De la **Fase 2**: el compilador, los nueve bloques en `contenido/bloques/` y el disparo manual.
 De la **Fase 1**: la voz elegida y el modelo verificado. *(El número español de Twilio está **en pausa
